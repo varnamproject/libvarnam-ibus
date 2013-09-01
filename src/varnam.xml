@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+	<name>org.freedesktop.IBus.Varnam</name>
+	<description>Varnam Input Engine</description>
+  <exec>/home/parallels/projects/libvarnam-ibus/src/ibus-engine-varnam --ibus</exec>
+	<version>1.2.99.20130628</version>
+	<author>Navaneeth K N</author>
+	<license>MIT</license>
+	<homepage>http://code.google.com/p/ibus</homepage>
+	<textdomain>ibus-varnam</textdomain>
+
+	<engines>
+		<engine>
+			<name>varnam</name>
+			<language>ko</language>
+			<license>MIT</license>
+			<author>Navaneeth &lt;navaneethkn@gmail.com&gt;</author>
+			<icon>/usr/share/ibus-tmpl/icons/ibus-enchant.svg</icon>
+			<layout>us</layout>
+			<longname>Varnam</longname>
+			<description>Varnam Input Method</description>
+			<rank>0</rank>
+		</engine>
+	</engines>
+
+</component>
