@@ -12,7 +12,7 @@
 	<engines>
 		<engine>
 			<name>varnam</name>
-			<language>ko</language>
+			<language>ml</language>
 			<license>MIT</license>
 			<author>Navaneeth &lt;navaneethkn@gmail.com&gt;</author>
 			<icon>/usr/share/ibus-tmpl/icons/ibus-enchant.svg</icon>

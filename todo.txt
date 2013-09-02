@@ -1,1 +1,2 @@
 Add varnam icon
+search path for vst file

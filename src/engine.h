@@ -32,4 +32,6 @@
 
 GType   ibus_varnam_engine_get_type    (void);
 
+void varnam_engine_init_handle (const gchar *langCode);
+
 #endif
