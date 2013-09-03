@@ -4,6 +4,8 @@ cmake_minimum_required (VERSION 2.8.8)
 project(ibus-engine-varnam)
 message ("Generating project ${PROJECT_NAME}")
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY} )
+
 set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install dir prefix")
 set(IBUS_VER 1.3)
 set(VARNAM_VER 3.0.0)

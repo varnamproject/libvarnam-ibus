@@ -21,3 +21,6 @@ CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 Makefile
+
+# Executable files
+ibus-engine-varnam

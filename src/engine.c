@@ -73,7 +73,6 @@ static gboolean ibus_varnam_engine_process_key_event (IBusEngine  *engine, guint
 											/*(IBusEngine             *engine,*/
                                              /*const gchar            *prop_name);*/
 
-static void ibus_varnam_engine_commit_string (IBusVarnamEngine  *engine, const gchar *string);
 static void ibus_varnam_engine_update (IBusVarnamEngine      *engine);
 
 G_DEFINE_TYPE (IBusVarnamEngine, ibus_varnam_engine, IBUS_TYPE_ENGINE)
@@ -174,7 +173,6 @@ static void
 ibus_varnam_engine_update_preedit (IBusVarnamEngine *engine)
 {
   IBusText *text;
-  gint retval;
 
   text = ibus_text_new_from_static_string (engine->preedit->str);
   ibus_engine_update_preedit_text ((IBusEngine *) engine,
@@ -192,30 +190,11 @@ ibus_varnam_engine_clear_state (IBusVarnamEngine *engine)
   ibus_varnam_engine_update (engine);
 }
 
-/* commit preedit to client and update preedit */
 static gboolean
-ibus_varnam_engine_commit_preedit (IBusVarnamEngine *engine, gboolean addSpace)
+ibus_varnam_engine_commit (IBusVarnamEngine *engine, IBusText *text)
 {
-  IBusText *candidate, *withspace;
-
-  if (engine->preedit->len == 0)
-    return FALSE;
-
-  if (ibus_lookup_table_get_number_of_candidates (engine->table) == 0)
-    return FALSE;
-
-  candidate = ibus_lookup_table_get_candidate (engine->table, ibus_lookup_table_get_cursor_pos (engine->table));
-  if (addSpace) {
-    withspace = ibus_text_new_from_printf ("%s ", ibus_text_get_text (candidate));
-
-    /* commit text releases "withspace" as it is floating */
-    ibus_engine_commit_text ((IBusEngine *) engine, withspace);
-  }
-  else {
-    /* Not releasing candidate because it is a borrowed reference */
-    ibus_engine_commit_text ((IBusEngine *) engine, candidate);
-  }
-
+   /* Not releasing candidate because it is a borrowed reference */
+  ibus_engine_commit_text ((IBusEngine *) engine, text);
   ibus_varnam_engine_clear_state (engine);
   return TRUE;
 }
@@ -228,7 +207,24 @@ ibus_varnam_engine_update (IBusVarnamEngine *engine)
     ibus_engine_hide_lookup_table ((IBusEngine *) engine);
 }
 
+static IBusText*
+ibus_varnam_engine_get_candidate (IBusVarnamEngine *engine)
+{
+  if (ibus_lookup_table_get_number_of_candidates (engine->table) == 0)
+    return NULL;
+
+  return ibus_lookup_table_get_candidate (engine->table, ibus_lookup_table_get_cursor_pos (engine->table));
+}
+
 #define is_alpha(c) (((c) >= IBUS_a && (c) <= IBUS_z) || ((c) >= IBUS_A && (c) <= IBUS_Z))
+
+static gboolean
+is_word_break (guint keyval)
+{
+  if (keyval == 46 || keyval == 44 || keyval == 63 || keyval == 33 || keyval == 40 || keyval == 41 || keyval == 34 || keyval == 59 || keyval == 39)
+    return TRUE;
+  return FALSE;
+}
 
 static gboolean
 ibus_varnam_engine_process_key_event (IBusEngine *engine,
@@ -236,7 +232,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
                                        guint       keycode,
                                        guint       modifiers)
 {
-  IBusText *text;
+  IBusText *text, *tmp;
   IBusVarnamEngine *varnamEngine = (IBusVarnamEngine *) engine;
 
   if (modifiers & IBUS_RELEASE_MASK)
@@ -260,10 +256,17 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
 
   switch (keyval) {
     case IBUS_space:
-      g_string_append (varnamEngine->preedit, " ");
-      return ibus_varnam_engine_commit_preedit (varnamEngine, TRUE);
+      text = ibus_varnam_engine_get_candidate (varnamEngine);
+      if (text == NULL)
+        return FALSE;
+      tmp = ibus_text_new_from_printf ("%s ", ibus_text_get_text (text));
+      return ibus_varnam_engine_commit (varnamEngine, tmp);
+
     case IBUS_Return:
-      return ibus_varnam_engine_commit_preedit (varnamEngine, FALSE);
+      text = ibus_varnam_engine_get_candidate (varnamEngine);
+      if (text == NULL)
+        return FALSE;
+      return ibus_varnam_engine_commit (varnamEngine, text);
 
     case IBUS_Escape:
       if (varnamEngine->preedit->len == 0)
@@ -317,6 +320,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         varnamEngine->cursor_pos --;
         g_string_erase (varnamEngine->preedit, varnamEngine->cursor_pos, 1);
         ibus_varnam_engine_update (varnamEngine);
+        ibus_varnam_engine_update_lookup_table (varnamEngine);
       }
       return TRUE;
 
@@ -326,8 +330,17 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       if (varnamEngine->cursor_pos < varnamEngine->preedit->len) {
         g_string_erase (varnamEngine->preedit, varnamEngine->cursor_pos, 1);
         ibus_varnam_engine_update (varnamEngine);
+        ibus_varnam_engine_update_lookup_table (varnamEngine);
       }
       return TRUE;
+  }
+
+  if (is_word_break (keyval)) {
+    text = ibus_varnam_engine_get_candidate (varnamEngine);
+    if (text != NULL) {
+      tmp = ibus_text_new_from_printf ("%s%c", ibus_text_get_text (text), keyval);
+      return ibus_varnam_engine_commit (varnamEngine, tmp);
+    }
   }
 
   if (is_alpha (keyval)) {
