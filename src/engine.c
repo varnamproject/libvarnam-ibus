@@ -88,16 +88,21 @@ void varnam_engine_init_handle (const gchar *langCode)
   if (handle == NULL) {
     if (strcmp (langCode, "ml") == 0) {
       rc = varnam_init ("/usr/local/share/varnam/vst/ml-unicode.vst", &handle, &msg);
+      if (rc != VARNAM_SUCCESS) {
+        g_message ("Error initializing varnam. %s\n", msg);
+        handle = NULL;
+      }
+
+      rc = varnam_config (handle, VARNAM_CONFIG_ENABLE_SUGGESTIONS, "/home/parallels/.varnam/suggestions/ml-unicode.vst.learnings");
+      if (rc != VARNAM_SUCCESS) {
+        g_message ("Error configuring suggestions. %s\n", msg);
+      }
     }
     else {
       g_message ("Incorrect language code: %s\n", langCode);
       return;
     }
 
-    if (rc != VARNAM_SUCCESS) {
-      g_message ("Error initializing varnam. %s\n", msg);
-      handle = NULL;
-    }
   }
 }
 
@@ -178,31 +183,43 @@ ibus_varnam_engine_update_preedit (IBusVarnamEngine *engine)
                                    TRUE);
 }
 
+static void
+ibus_varnam_engine_clear_state (IBusVarnamEngine *engine)
+{
+  g_string_assign (engine->preedit, "");
+  engine->cursor_pos = 0;
+  ibus_lookup_table_clear (engine->table);
+  ibus_varnam_engine_update (engine);
+}
+
 /* commit preedit to client and update preedit */
 static gboolean
-ibus_varnam_engine_commit_preedit (IBusVarnamEngine *engine)
+ibus_varnam_engine_commit_preedit (IBusVarnamEngine *engine, gboolean addSpace)
 {
+  IBusText *candidate, *withspace;
+
   if (engine->preedit->len == 0)
     return FALSE;
 
-  ibus_varnam_engine_commit_string (engine, engine->preedit->str);
-  g_string_assign (engine->preedit, "");
-  engine->cursor_pos = 0;
+  if (ibus_lookup_table_get_number_of_candidates (engine->table) == 0)
+    return FALSE;
 
-  ibus_varnam_engine_update (engine);
+  candidate = ibus_lookup_table_get_candidate (engine->table, ibus_lookup_table_get_cursor_pos (engine->table));
+  if (addSpace) {
+    withspace = ibus_text_new_from_printf ("%s ", ibus_text_get_text (candidate));
 
+    /* commit text releases "withspace" as it is floating */
+    ibus_engine_commit_text ((IBusEngine *) engine, withspace);
+  }
+  else {
+    /* Not releasing candidate because it is a borrowed reference */
+    ibus_engine_commit_text ((IBusEngine *) engine, candidate);
+  }
+
+  ibus_varnam_engine_clear_state (engine);
   return TRUE;
 }
 
-
-static void
-ibus_varnam_engine_commit_string (IBusVarnamEngine *engine,
-                                  const gchar       *string)
-{
-    IBusText *text;
-    text = ibus_text_new_from_static_string (string);
-    ibus_engine_commit_text ((IBusEngine *) engine, text);
-}
 
 static void
 ibus_varnam_engine_update (IBusVarnamEngine *engine)
@@ -225,11 +242,13 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
   if (modifiers & IBUS_RELEASE_MASK)
     return FALSE;
 
+  g_print ("%d\n", keyval);
+
   modifiers &= (IBUS_CONTROL_MASK | IBUS_MOD1_MASK);
 
   if (modifiers == IBUS_CONTROL_MASK && keyval == IBUS_s) {
-    ibus_varnam_engine_update_lookup_table (varnamEngine);
-    return TRUE;
+    /*ibus_varnam_engine_update_lookup_table (varnamEngine);*/
+    /*return TRUE;*/
   }
 
   if (modifiers != 0) {
@@ -239,13 +258,12 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       return TRUE;
   }
 
-
   switch (keyval) {
     case IBUS_space:
       g_string_append (varnamEngine->preedit, " ");
-      return ibus_varnam_engine_commit_preedit (varnamEngine);
+      return ibus_varnam_engine_commit_preedit (varnamEngine, TRUE);
     case IBUS_Return:
-      return ibus_varnam_engine_commit_preedit (varnamEngine);
+      return ibus_varnam_engine_commit_preedit (varnamEngine, FALSE);
 
     case IBUS_Escape:
       if (varnamEngine->preedit->len == 0)
@@ -277,20 +295,18 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     case IBUS_Up:
       if (varnamEngine->preedit->len == 0)
         return FALSE;
-      if (varnamEngine->cursor_pos != 0) {
-        varnamEngine->cursor_pos = 0;
-        ibus_varnam_engine_update (varnamEngine);
-      }
+
+      ibus_lookup_table_cursor_up (varnamEngine->table);
+      ibus_engine_update_lookup_table (engine, varnamEngine->table, TRUE);
+
       return TRUE;
 
     case IBUS_Down:
       if (varnamEngine->preedit->len == 0)
         return FALSE;
 
-      if (varnamEngine->cursor_pos != varnamEngine->preedit->len) {
-        varnamEngine->cursor_pos = varnamEngine->preedit->len;
-        ibus_varnam_engine_update (varnamEngine);
-      }
+      ibus_lookup_table_cursor_down (varnamEngine->table);
+      ibus_engine_update_lookup_table (engine, varnamEngine->table, TRUE);
 
       return TRUE;
 
@@ -315,15 +331,13 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
   }
 
   if (is_alpha (keyval)) {
-    g_string_insert_c (varnamEngine->preedit,
-        varnamEngine->cursor_pos,
-        keyval);
-
+    g_string_insert_c (varnamEngine->preedit, varnamEngine->cursor_pos, keyval);
     varnamEngine->cursor_pos ++;
     ibus_varnam_engine_update (varnamEngine);
-
+    ibus_varnam_engine_update_lookup_table (varnamEngine);
     return TRUE;
   }
+
 
   return FALSE;
 }
