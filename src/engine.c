@@ -78,7 +78,6 @@ static void ibus_varnam_engine_update (IBusVarnamEngine      *engine);
 G_DEFINE_TYPE (IBusVarnamEngine, ibus_varnam_engine, IBUS_TYPE_ENGINE)
 
 static varnam *handle = NULL;
-
 void varnam_engine_init_handle (const gchar *langCode)
 {
   char *msg;
@@ -193,6 +192,12 @@ ibus_varnam_engine_clear_state (IBusVarnamEngine *engine)
 static gboolean
 ibus_varnam_engine_commit (IBusVarnamEngine *engine, IBusText *text)
 {
+  int rc;
+  rc = varnam_learn (handle, ibus_text_get_text (text));
+  if (rc != VARNAM_SUCCESS) {
+    g_message ("Failed to learn: %s\n", ibus_text_get_text (text));
+  }
+
    /* Not releasing candidate because it is a borrowed reference */
   ibus_engine_commit_text ((IBusEngine *) engine, text);
   ibus_varnam_engine_clear_state (engine);
