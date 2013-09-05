@@ -164,6 +164,7 @@ ibus_varnam_engine_update_lookup_table (IBusVarnamEngine *engine)
     word = varray_get (words, i);
     ibus_lookup_table_append_candidate (engine->table, ibus_text_new_from_string (word->text));
   }
+  ibus_lookup_table_append_candidate (engine->table, ibus_text_new_from_string (engine->preedit->str));
 
   ibus_engine_update_lookup_table ((IBusEngine *) engine, engine->table, TRUE);
 }
@@ -190,12 +191,14 @@ ibus_varnam_engine_clear_state (IBusVarnamEngine *engine)
 }
 
 static gboolean
-ibus_varnam_engine_commit (IBusVarnamEngine *engine, IBusText *text)
+ibus_varnam_engine_commit (IBusVarnamEngine *engine, IBusText *text, gboolean shouldLearn)
 {
   int rc;
-  rc = varnam_learn (handle, ibus_text_get_text (text));
-  if (rc != VARNAM_SUCCESS) {
-    g_message ("Failed to learn: %s\n", ibus_text_get_text (text));
+  if (shouldLearn) {
+    rc = varnam_learn (handle, ibus_text_get_text (text));
+    if (rc != VARNAM_SUCCESS) {
+      g_message ("Failed to learn: %s\n", ibus_text_get_text (text));
+    }
   }
 
    /* Not releasing candidate because it is a borrowed reference */
@@ -262,16 +265,21 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
   switch (keyval) {
     case IBUS_space:
       text = ibus_varnam_engine_get_candidate (varnamEngine);
-      if (text == NULL)
-        return FALSE;
+      if (text == NULL) {
+        tmp = ibus_text_new_from_printf ("%s ", varnamEngine->preedit->str);
+        return ibus_varnam_engine_commit (varnamEngine, tmp, FALSE);
+      }
       tmp = ibus_text_new_from_printf ("%s ", ibus_text_get_text (text));
-      return ibus_varnam_engine_commit (varnamEngine, tmp);
+      return ibus_varnam_engine_commit (varnamEngine, tmp, TRUE);
 
     case IBUS_Return:
       text = ibus_varnam_engine_get_candidate (varnamEngine);
-      if (text == NULL)
+      if (text == NULL) {
+        tmp = ibus_text_new_from_printf ("%s", varnamEngine->preedit->str);
+        ibus_varnam_engine_commit (varnamEngine, tmp, FALSE);
         return FALSE;
-      return ibus_varnam_engine_commit (varnamEngine, text);
+      }
+      return ibus_varnam_engine_commit (varnamEngine, text, TRUE);
 
     case IBUS_Escape:
       if (varnamEngine->preedit->len == 0)
@@ -287,6 +295,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         return FALSE;
       if (varnamEngine->cursor_pos > 0) {
         varnamEngine->cursor_pos --;
+        ibus_lookup_table_clear (varnamEngine->table);
         ibus_varnam_engine_update (varnamEngine);
       }
       return TRUE;
@@ -296,6 +305,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         return FALSE;
       if (varnamEngine->cursor_pos < varnamEngine->preedit->len) {
         varnamEngine->cursor_pos ++;
+        ibus_lookup_table_clear (varnamEngine->table);
         ibus_varnam_engine_update (varnamEngine);
       }
       return TRUE;
@@ -344,7 +354,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     text = ibus_varnam_engine_get_candidate (varnamEngine);
     if (text != NULL) {
       tmp = ibus_text_new_from_printf ("%s%c", ibus_text_get_text (text), keyval);
-      return ibus_varnam_engine_commit (varnamEngine, tmp);
+      return ibus_varnam_engine_commit (varnamEngine, tmp, TRUE);
     }
   }
 
