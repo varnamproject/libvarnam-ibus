@@ -250,11 +250,6 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
 
   modifiers &= (IBUS_CONTROL_MASK | IBUS_MOD1_MASK);
 
-  if (modifiers == IBUS_CONTROL_MASK && keyval == IBUS_s) {
-    /*ibus_varnam_engine_update_lookup_table (varnamEngine);*/
-    /*return TRUE;*/
-  }
-
   if (modifiers != 0) {
     if (varnamEngine->preedit->len == 0)
       return FALSE;
@@ -358,14 +353,13 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     }
   }
 
-  if (is_alpha (keyval)) {
+  if (keyval <= 128) {
     g_string_insert_c (varnamEngine->preedit, varnamEngine->cursor_pos, keyval);
     varnamEngine->cursor_pos ++;
     ibus_varnam_engine_update (varnamEngine);
     ibus_varnam_engine_update_lookup_table (varnamEngine);
     return TRUE;
   }
-
 
   return FALSE;
 }
