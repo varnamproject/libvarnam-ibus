@@ -24,3 +24,6 @@ Makefile
 
 # Executable files
 ibus-engine-varnam
+
+# libvarnam
+*.learnings*

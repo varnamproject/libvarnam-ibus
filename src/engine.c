@@ -49,7 +49,6 @@ static gboolean ibus_varnam_engine_process_key_event (IBusEngine  *engine, guint
 /*[>static void ibus_varnam_engine_focus_in    (IBusEngine             *engine);<]*/
 /*static void ibus_varnam_engine_focus_out   (IBusEngine             *engine);*/
 /*static void ibus_varnam_engine_reset       (IBusEngine             *engine);*/
-/*static void ibus_varnam_engine_enable      (IBusEngine             *engine);*/
 /*static void ibus_varnam_engine_disable     (IBusEngine             *engine);*/
 /*static void ibus_engine_set_cursor_location (IBusEngine             *engine,*/
                                              /*gint                    x,*/
@@ -73,7 +72,6 @@ static gboolean ibus_varnam_engine_process_key_event (IBusEngine  *engine, guint
 											/*(IBusEngine             *engine,*/
                                              /*const gchar            *prop_name);*/
 
-static void ibus_varnam_engine_update (IBusVarnamEngine      *engine);
 
 G_DEFINE_TYPE (IBusVarnamEngine, ibus_varnam_engine, IBUS_TYPE_ENGINE)
 
@@ -186,8 +184,9 @@ ibus_varnam_engine_clear_state (IBusVarnamEngine *engine)
 {
   g_string_assign (engine->preedit, "");
   engine->cursor_pos = 0;
+  ibus_varnam_engine_update_preedit (engine);
   ibus_lookup_table_clear (engine->table);
-  ibus_varnam_engine_update (engine);
+  ibus_engine_hide_lookup_table ((IBusEngine*) engine);
 }
 
 static gboolean
@@ -205,14 +204,6 @@ ibus_varnam_engine_commit (IBusVarnamEngine *engine, IBusText *text, gboolean sh
   ibus_engine_commit_text ((IBusEngine *) engine, text);
   ibus_varnam_engine_clear_state (engine);
   return TRUE;
-}
-
-
-static void
-ibus_varnam_engine_update (IBusVarnamEngine *engine)
-{
-    ibus_varnam_engine_update_preedit (engine);
-    ibus_engine_hide_lookup_table ((IBusEngine *) engine);
 }
 
 static IBusText*
@@ -246,8 +237,6 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
   if (modifiers & IBUS_RELEASE_MASK)
     return FALSE;
 
-  g_print ("%d\n", keyval);
-
   modifiers &= (IBUS_CONTROL_MASK | IBUS_MOD1_MASK);
 
   if (modifiers != 0) {
@@ -270,7 +259,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     case IBUS_Return:
       text = ibus_varnam_engine_get_candidate (varnamEngine);
       if (text == NULL) {
-        tmp = ibus_text_new_from_printf ("%s", varnamEngine->preedit->str);
+        tmp = ibus_text_new_from_static_string (varnamEngine->preedit->str);
         ibus_varnam_engine_commit (varnamEngine, tmp, FALSE);
         return FALSE;
       }
@@ -280,18 +269,16 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       if (varnamEngine->preedit->len == 0)
         return FALSE;
 
-      g_string_assign (varnamEngine->preedit, "");
-      varnamEngine->cursor_pos = 0;
-      ibus_varnam_engine_update (varnamEngine);
-      return TRUE;
+      tmp = ibus_text_new_from_static_string (varnamEngine->preedit->str);
+      ibus_varnam_engine_commit (varnamEngine, tmp, FALSE);
+      return FALSE;
 
     case IBUS_Left:
       if (varnamEngine->preedit->len == 0)
         return FALSE;
       if (varnamEngine->cursor_pos > 0) {
         varnamEngine->cursor_pos --;
-        ibus_lookup_table_clear (varnamEngine->table);
-        ibus_varnam_engine_update (varnamEngine);
+        ibus_varnam_engine_update_preedit (varnamEngine);
       }
       return TRUE;
 
@@ -300,8 +287,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         return FALSE;
       if (varnamEngine->cursor_pos < varnamEngine->preedit->len) {
         varnamEngine->cursor_pos ++;
-        ibus_lookup_table_clear (varnamEngine->table);
-        ibus_varnam_engine_update (varnamEngine);
+        ibus_varnam_engine_update_preedit (varnamEngine);
       }
       return TRUE;
 
@@ -311,7 +297,6 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
 
       ibus_lookup_table_cursor_up (varnamEngine->table);
       ibus_engine_update_lookup_table (engine, varnamEngine->table, TRUE);
-
       return TRUE;
 
     case IBUS_Down:
@@ -329,7 +314,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       if (varnamEngine->cursor_pos > 0) {
         varnamEngine->cursor_pos --;
         g_string_erase (varnamEngine->preedit, varnamEngine->cursor_pos, 1);
-        ibus_varnam_engine_update (varnamEngine);
+        ibus_varnam_engine_update_preedit (varnamEngine);
         ibus_varnam_engine_update_lookup_table (varnamEngine);
       }
       return TRUE;
@@ -339,7 +324,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         return FALSE;
       if (varnamEngine->cursor_pos < varnamEngine->preedit->len) {
         g_string_erase (varnamEngine->preedit, varnamEngine->cursor_pos, 1);
-        ibus_varnam_engine_update (varnamEngine);
+        ibus_varnam_engine_update_preedit (varnamEngine);
         ibus_varnam_engine_update_lookup_table (varnamEngine);
       }
       return TRUE;
@@ -356,7 +341,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
   if (keyval <= 128) {
     g_string_insert_c (varnamEngine->preedit, varnamEngine->cursor_pos, keyval);
     varnamEngine->cursor_pos ++;
-    ibus_varnam_engine_update (varnamEngine);
+    ibus_varnam_engine_update_preedit (varnamEngine);
     ibus_varnam_engine_update_lookup_table (varnamEngine);
     return TRUE;
   }
