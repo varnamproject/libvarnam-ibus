@@ -1,4 +1,3 @@
 Add varnam icon
 search path for vst file
 when typing over an existing word, get the surrounding text and append to preedit
-consider ., etc are word break characters and insert the candidate

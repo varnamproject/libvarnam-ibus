@@ -336,6 +336,8 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       tmp = ibus_text_new_from_printf ("%s%c", ibus_text_get_text (text), keyval);
       return ibus_varnam_engine_commit (varnamEngine, tmp, TRUE);
     }
+
+    return FALSE;
   }
 
   if (keyval <= 128) {
