@@ -7,6 +7,7 @@ message ("Generating project ${PROJECT_NAME}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY} )
 
 set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install dir prefix")
+set(GLIB_VER 2.0)
 set(IBUS_VER 1.3)
 set(VARNAM_VER 3.0.0)
 
@@ -15,6 +16,7 @@ set(VARNAM_VER 3.0.0)
 #################################
 
 FIND_PACKAGE(PkgConfig)
+PKG_CHECK_MODULES(GLIB REQUIRED glib-2.0>=${GLIB_VER})
 PKG_CHECK_MODULES(IBUS REQUIRED ibus-1.0>=${IBUS_VER})
 PKG_CHECK_MODULES(VARNAM REQUIRED varnamstatic>=${VARNAM_VER})
 
@@ -31,4 +33,5 @@ IF(MSVC)
 ENDIF()
 
 add_subdirectory(src)
+add_subdirectory(sync)
 
