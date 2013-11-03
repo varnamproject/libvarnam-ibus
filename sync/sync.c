@@ -27,35 +27,66 @@
 #include <varnam.h>
 #include <deps/sqlite3.h>
 
-static void
+static gchar *langCode = NULL;
+
+static const GOptionEntry entries[] =
+{
+  { "language", 'l', 0, G_OPTION_ARG_STRING, &langCode, "Language code for this engine", NULL },
+  { NULL },
+};
+
+
+static gboolean
 upload_word (const gchar *word, const gchar *lang, const gchar *host)
 {
-  GString *postData, *url;
-  gchar *argv[4];
+  GString *postData, *url, *commandLine;
   GError *error = NULL;
   gboolean spawned;
 
   postData = g_string_new ("");
   g_string_printf (postData, "\"lang=%s&text=%s\"", lang, word);
   url = g_string_new ("");
-  g_string_printf (url, "%s/learn", host);
+  g_string_printf (url, "%s/api/learn", host);
 
-  argv[0] = "curl";
-  argv[1] = "--data";
-  argv[2] = postData->str;
-  argv[3] = url->str;
+  commandLine = g_string_new ("");
+  g_string_printf (commandLine, "curl --silent --data %s %s --output /dev/null", postData->str, url->str);
 
-  spawned = g_spawn_async (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &error);
+  spawned = g_spawn_command_line_async (commandLine->str, &error);
   if (!spawned) {
     g_print ("Failed to learn: %s. %s\n", word, error->message);
   }
 
   g_string_free (postData, TRUE);
   g_string_free (url, TRUE);
+  g_string_free (commandLine, TRUE);
+
+  return spawned;
 }
 
 int main (int argc, char **argv)
 {
-  upload_word ("hey", "ml", "http://192.168.1.3:8082");
+  GOptionContext *context;
+  GError *error = NULL;
+  gboolean uploaded;
+
+  /* Parse the command line */
+  context = g_option_context_new ("- varnam sync");
+  g_option_context_add_main_entries (context, entries, "varnam-sync");
+  if (!g_option_context_parse (context, &argc, &argv, &error)) {
+    g_printerr ("Option parsing failed: %s\n", error->message);
+    g_error_free (error);
+    return (-1);
+  }
+
+  if (langCode == NULL) {
+    g_printerr ("Language code is not set\n");
+    return (-1);
+  }
+
+
+  uploaded = upload_word ("hey", "ml", "http://192.168.1.2:3000");
+  if (!uploaded) {
+    g_print ("Pooy failed\n");
+  }
   return 0;
 }

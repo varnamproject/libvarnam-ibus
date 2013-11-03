@@ -5,7 +5,6 @@ project(ibus-engine-varnam)
 message ("Generating project ${PROJECT_NAME}")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY} )
-
 set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install dir prefix")
 set(GLIB_VER 2.0)
 set(IBUS_VER 1.3)
