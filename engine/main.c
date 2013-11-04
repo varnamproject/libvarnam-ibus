@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <ibus.h>
 #include "engine.h"
+#include <engine-util.h>
 
 static IBusBus *bus = NULL;
 static IBusFactory *factory = NULL;
@@ -41,26 +42,27 @@ glib_log_handler (const gchar *logDomain, GLogLevelFlags logLevel, const gchar *
   GString *logs;
 
   if (logfile == NULL) {
-    logs = g_string_new (g_get_home_dir ());
-    g_string_append (logs, "/.varnam/ibus-engine/logs");
+    logs = ibus_varnam_engine_get_config_dir ();
+    if (logs == NULL)
+      return;
+
+    g_string_append (logs, "/logs");
     if (g_mkdir_with_parents (logs->str, 0755) == -1) {
       g_printerr ("Failed to create logs directory: %s. Logging to file will be disabled\n", logs->str);
     }
 
     g_string_append_printf (logs, "/logs-%s.txt", langCode);
-
     logfile = fopen (logs->str, "a");
     if (logfile == NULL) {
       g_printerr ("Failed to create logs: %s. Logging to file will be disabled\n", logs->str);
+      g_string_free (logs, TRUE);
+      return;
     }
-
     g_string_free (logs, TRUE);
   }
 
-  if (logfile != NULL) {
-    fprintf (logfile, "%s %s", logDomain, message);
-    fflush (logfile);
-  }
+  fprintf (logfile, "%s %s", logDomain, message);
+  fflush (logfile);
   g_print ("%s %s", logDomain, message);
 }
 

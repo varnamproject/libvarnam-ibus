@@ -9,6 +9,7 @@ set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install dir prefix")
 set(GLIB_VER 2.0)
 set(IBUS_VER 1.3)
 set(VARNAM_VER 3.0.0)
+set(COMMON_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/common)
 
 ##################################
 # Finding required packages
@@ -31,6 +32,7 @@ IF(MSVC)
         add_definitions(-DWIN32 -D_CRT_SECURE_NO_WARNINGS)
 ENDIF()
 
-add_subdirectory(src)
+add_subdirectory(common)
+add_subdirectory(engine)
 add_subdirectory(sync)
 
