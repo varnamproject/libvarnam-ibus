@@ -63,7 +63,7 @@ ibus_varnam_engine_persist_key_file (GKeyFile *keyFile, GString *filePath)
  }
  else {
    keyFileContents = g_key_file_to_data (keyFile, NULL, NULL);
-   fprintf (f, "%s\n", keyFileContents);
+   fprintf (f, "%s", keyFileContents);
    fclose (f);
    g_free (keyFileContents);
  }

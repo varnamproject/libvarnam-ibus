@@ -39,31 +39,92 @@ static const GOptionEntry entries[] =
   { NULL },
 };
 
-/*TODO: Need to handle errors */
 static gboolean
 upload_word (const gchar *word, const gchar *lang)
 {
   GString *postData, *url, *commandLine;
   GError *error = NULL;
   gboolean spawned;
+  gint exitStatus;
+  gchar *stdOut = NULL, *stdErr = NULL;
 
   postData = g_string_new ("");
   g_string_printf (postData, "\"lang=%s&text=%s\"", lang, word);
   url = g_string_new ("http://192.168.1.3:3000/api/learn");
 
   commandLine = g_string_new ("");
-  g_string_printf (commandLine, "curl --silent --data %s %s --output /dev/null", postData->str, url->str);
+  g_string_printf (commandLine, "curl --fail --data %s %s --output /dev/null", postData->str, url->str);
 
-  spawned = g_spawn_command_line_async (commandLine->str, &error);
-  if (!spawned) {
-    g_print ("Failed to upload: %s. %s\n", word, error->message);
+  spawned = g_spawn_command_line_sync (commandLine->str, &stdOut, &stdErr, &exitStatus, &error);
+  if (!spawned || exitStatus != 0) {
+    g_print ("Failed to upload: %s. %s. %s. %s\n", word, error == NULL ? "" : error->message, stdOut, stdErr);
   }
 
   g_string_free (postData, TRUE);
   g_string_free (url, TRUE);
   g_string_free (commandLine, TRUE);
+  g_free (stdOut);
+  g_free (stdErr);
 
-  return spawned;
+  return spawned && exitStatus == 0;
+}
+
+static gboolean
+is_the_same_day (gint64 timestamp)
+{
+  GDateTime *now, *then;
+  gint year, month, date, year1, month1, date1;
+
+  then = g_date_time_new_from_unix_local (timestamp);
+  now = g_date_time_new_now_local ();
+  if (now == NULL)
+    return FALSE;
+
+  g_date_time_get_ymd (now, &year, &month, &date);
+  g_date_time_get_ymd (then, &year1, &month1, &date1);
+
+  return year == year1 && month == month1 && date == date1;
+}
+
+static gboolean
+download_words (gint64 timestamp, GString **downloadedFilePath)
+{
+  GDateTime *lastDownloaded, *now;
+  gint year, month, date, exitStatus;
+  GString *url, *commandLine, *outputFile;
+  GError *error = NULL;
+  gboolean spawned;
+  gchar *stdOut = NULL, *stdErr = NULL;
+
+  lastDownloaded = g_date_time_new_from_unix_local (timestamp);
+  if (lastDownloaded == NULL) {
+    g_print ("Incorrect timestamp: %" G_GINT64_FORMAT  "\n", timestamp);
+    return FALSE;
+  }
+
+  outputFile = g_string_new ("");
+  now = g_date_time_new_now_local ();
+  g_string_printf (outputFile, "%s/%" G_GINT64_FORMAT ".txt", g_get_tmp_dir (), g_date_time_to_unix (now));
+  g_date_time_unref (now);
+
+  g_date_time_get_ymd (lastDownloaded, &year, &month, &date);
+  url = g_string_new ("");
+  g_string_printf (url, "http://www.varnamproject.com/words/%s/%d/%d/%d", langCode, year, month, date);
+
+  commandLine = g_string_new ("");
+  g_string_printf (commandLine, "curl --fail -o %s %s", outputFile->str, url->str);
+
+  spawned = g_spawn_command_line_sync (commandLine->str, &stdOut, &stdErr, &exitStatus, &error);
+  if (!spawned || exitStatus != 0) {
+    g_print ("Failed to download: %s\n, command: %s\n, output file: %s\n, error message: %s\n, stdout: %s\n, stderr: %s.\n", 
+        url->str, commandLine->str, outputFile->str,  error == NULL ? "NULL" : error->message, stdOut, stdErr);
+  }
+
+  g_string_free (url, TRUE);
+  g_string_free (commandLine, TRUE);
+
+  *downloadedFilePath = outputFile;
+  return spawned && exitStatus == 0;
 }
 
 static GString*
@@ -109,6 +170,21 @@ get_last_upload_timestamp(void)
   return timestamp;
 }
 
+static gint64
+get_last_download_timestamp(void) 
+{
+  gint64 timestamp = 0;
+  GKeyFile *timestampFile;
+
+  timestampFile = get_timestamp_file ();
+  if (timestampFile == NULL)
+    return 0;
+
+  timestamp = g_key_file_get_int64 (timestampFile, "timestamps", "download", NULL);
+  g_key_file_free (timestampFile);
+  return timestamp;
+}
+
 static int 
 callback(void *NotUsed, int argc, char **argv, char **azColName)
 {
@@ -120,7 +196,7 @@ callback(void *NotUsed, int argc, char **argv, char **azColName)
 }
 
 static gboolean
-upload_words_learned_after(gint64 lastUploadedTimestamp, GError **error)
+upload_words_learned_after(gint64 lastUploadedTimestamp)
 {
   GString *query, *twoDigitMonth, *twoDigitDay;
   GDateTime *lastUploaded;
@@ -164,35 +240,81 @@ upload_words_learned_after(gint64 lastUploadedTimestamp, GError **error)
 }
 
 static void
+write_current_timestamp_to_file(const char *key)
+{
+  GKeyFile *timestampFile;
+  GString *timestampFilePath;
+  GDateTime *now;
+
+  timestampFile = get_timestamp_file ();
+  if (timestampFile != NULL) {
+    now = g_date_time_new_now_local ();
+    g_key_file_set_int64 (timestampFile, "timestamps", key, g_date_time_to_unix (now));
+    timestampFilePath = get_timestamp_file_path ();
+    if (timestampFilePath != NULL) {
+      ibus_varnam_engine_persist_key_file (timestampFile, timestampFilePath);
+    }
+
+    g_date_time_unref (now);
+    g_key_file_free (timestampFile);
+    g_string_free (timestampFilePath, TRUE);
+  }
+}
+
+static void
 perform_upload(void)
 {
   gint64 lastUploaded;
-  GDateTime *now;
-  GKeyFile *timestampFile;
-  GString *timestampFilePath;
 
   lastUploaded = get_last_upload_timestamp ();
   if (lastUploaded != 0) {
     /* uploading all the items that are learned after the last upload */
-    g_print ("here");
-    upload_words_learned_after (lastUploaded, NULL);
+    upload_words_learned_after (lastUploaded);
   }
-  else {
-    /* No last upload. Writing current timestamp to the file */
-    timestampFile = get_timestamp_file ();
-    if (timestampFile != NULL) {
-      now = g_date_time_new_now_local ();
-      g_key_file_set_int64 (timestampFile, "timestamps", "upload", g_date_time_to_unix (now));
-      timestampFilePath = get_timestamp_file_path ();
-      if (timestampFilePath != NULL) {
-        ibus_varnam_engine_persist_key_file (timestampFile, timestampFilePath);
-      }
 
-      g_date_time_unref (now);
-      g_key_file_free (timestampFile);
-      g_string_free (timestampFilePath, TRUE);
+  write_current_timestamp_to_file ("upload");
+}
+
+static void
+perform_download(void)
+{
+  gint64 lastDownloaded;
+  GString *downloadedFile;
+  gboolean downloaded;
+  varnam *handle;
+  char *msg;
+  int rc;
+  vlearn_status learnStatus;
+
+  lastDownloaded = get_last_download_timestamp ();
+  if (lastDownloaded != 0 && !is_the_same_day (lastDownloaded)) {
+    downloaded = download_words (lastDownloaded, &downloadedFile);
+    if (!downloaded) {
+      g_print ("Failed to download the latest words");
+      return;
     }
+
+    rc = varnam_init ("/usr/local/share/varnam/vst/ml-unicode.vst", &handle, &msg);
+    if (rc != VARNAM_SUCCESS) {
+      g_print ("Error initializing varnam. %s\n", msg);
+      return;
+    }
+
+    rc = varnam_config (handle, VARNAM_CONFIG_ENABLE_SUGGESTIONS, "/home/parallels/.varnam/suggestions/ml-unicode.vst.learnings");
+    if (rc != VARNAM_SUCCESS) {
+      g_print ("Error configuring suggestions. %s\n", msg);
+      return;
+    }
+
+    rc = varnam_learn_from_file (handle, downloadedFile->str, &learnStatus, NULL, NULL);
+    if (rc != VARNAM_SUCCESS) {
+      g_print ("Error learning from file. %s\n", varnam_get_last_error (handle));
+    }
+
+    varnam_destroy (handle);
   }
+
+  write_current_timestamp_to_file ("download");
 }
 
 int main (int argc, char **argv)
@@ -215,11 +337,7 @@ int main (int argc, char **argv)
   }
 
   perform_upload ();
+  perform_download ();
 
-
-  /*uploaded = upload_word ("hey", "ml", "http://192.168.1.2:3000");*/
-  /*if (!uploaded) {*/
-    /*g_print ("Pooy failed\n");*/
-  /*}*/
   return 0;
 }
