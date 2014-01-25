@@ -12,5 +12,5 @@ list (APPEND varnam_sync_sources
 
 set(sync_executable_name varnam-sync)
 add_executable(${sync_executable_name} ${varnam_sync_sources} $<TARGET_OBJECTS:common>)
-target_link_libraries(${sync_executable_name} ${VARNAM_LIBRARIES} ${GLIB_LIBRARIES} dl)
+target_link_libraries(${sync_executable_name} ${VARNAM_LIBRARIES} ${GLIB_LIBRARIES} dl pthread)
 

@@ -26,12 +26,6 @@ IF(CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_C_FLAGS_RELEASE "-O2")
 ENDIF()
 
-IF(MSVC)
-        set(CMAKE_C_FLAGS "/Wall /wd\"4255;4100\"")
-        # We don't want to use MSVC's more secure versions of functions. So suppressing the warnings
-        add_definitions(-DWIN32 -D_CRT_SECURE_NO_WARNINGS)
-ENDIF()
-
 add_subdirectory(common)
 add_subdirectory(engine)
 add_subdirectory(sync)

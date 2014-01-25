@@ -11,5 +11,5 @@ list (APPEND varnam_engine_sources
 
 set(engine_executable_name ibus-engine-varnam)
 add_executable(${engine_executable_name} ${varnam_engine_sources} $<TARGET_OBJECTS:common>)
-target_link_libraries(${engine_executable_name} ${VARNAM_LIBRARIES} ${IBUS_LIBRARIES})
+target_link_libraries(${engine_executable_name} ${VARNAM_LIBRARIES} ${IBUS_LIBRARIES} pthread dl)
 
