@@ -2,17 +2,17 @@
 <component>
 	<name>org.freedesktop.IBus.Varnam</name>
 	<description>Varnam Input Engine</description>
-    <exec>ibus-engine-varnam --ibus</exec>
+    <exec>${CMAKE_INSTALL_PREFIX}/bin/ibus-engine-varnam --ibus -l ${VARNAM_ENGINE_LANG_CODE}</exec>
 	<version>0.1</version>
 	<author>Navaneeth K N</author>
 	<license>MIT</license>
-	<homepage>http://code.google.com/p/ibus</homepage>
+    <homepage>https://gitorious.org/varnamproject/</homepage>
 	<textdomain>ibus-varnam</textdomain>
 
 	<engines>
 		<engine>
-			<name>varnam</name>
-			<language>ml</language>
+            <name>varnam</name>
+			<language>${VARNAM_ENGINE_LANG_CODE}</language>
 			<license>MIT</license>
 			<author>Navaneeth &lt;navaneethkn@gmail.com&gt;</author>
 			<icon>/usr/share/ibus-tmpl/icons/ibus-enchant.svg</icon>

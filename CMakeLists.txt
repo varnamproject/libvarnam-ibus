@@ -10,6 +10,7 @@ set(GLIB_VER 2.0)
 set(IBUS_VER 1.3)
 set(VARNAM_VER 3.0.0)
 set(COMMON_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/common)
+set(sync_executable_name varnam-sync)
 
 ##################################
 # Finding required packages
@@ -25,6 +26,9 @@ IF(CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_C_FLAGS_DEBUG "-g")
     set(CMAKE_C_FLAGS_RELEASE "-O2")
 ENDIF()
+
+# Making a directory for learnings file
+file(MAKE_DIRECTORY $ENV{HOME}/.local/share/varnam/suggestions)
 
 add_subdirectory(common)
 add_subdirectory(engine)
