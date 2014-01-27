@@ -83,15 +83,10 @@ void varnam_engine_init_handle (const gchar *langCode)
 
   if (handle == NULL) {
     if (strcmp (langCode, "ml") == 0) {
-      rc = varnam_init ("/usr/local/share/varnam/vst/ml-unicode.vst", &handle, &msg);
+      rc = varnam_init_from_lang ("ml", &handle, &msg);
       if (rc != VARNAM_SUCCESS) {
         g_message ("Error initializing varnam. %s\n", msg);
         handle = NULL;
-      }
-
-      rc = varnam_config (handle, VARNAM_CONFIG_ENABLE_SUGGESTIONS, "/home/parallels/.varnam/suggestions/ml-unicode.vst.learnings");
-      if (rc != VARNAM_SUCCESS) {
-        g_message ("Error configuring suggestions. %s\n", msg);
       }
     }
     else {

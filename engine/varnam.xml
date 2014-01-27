@@ -2,8 +2,8 @@
 <component>
 	<name>org.freedesktop.IBus.Varnam</name>
 	<description>Varnam Input Engine</description>
-  <exec>/home/parallels/projects/libvarnam-ibus/src/ibus-engine-varnam --ibus</exec>
-	<version>1.2.99.20130628</version>
+    <exec>ibus-engine-varnam --ibus</exec>
+	<version>0.1</version>
 	<author>Navaneeth K N</author>
 	<license>MIT</license>
 	<homepage>http://code.google.com/p/ibus</homepage>
