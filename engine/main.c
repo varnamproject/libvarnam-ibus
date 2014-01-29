@@ -85,9 +85,11 @@ ibus_disconnected_cb (IBusBus  *bus,
 static void
 init (void)
 {
-  GString *engineName;
+  GString *engineName, *busName;
   engineName = g_string_new ("Varnam.");
   g_string_append (engineName, langCode);
+  busName = g_string_new ("org.freedesktop.IBus.Varnam.");
+  g_string_append (busName, langCode);
 
   ibus_init ();
 
@@ -100,11 +102,11 @@ init (void)
   ibus_factory_add_engine (factory, engineName->str, IBUS_TYPE_VARNAM_ENGINE);
 
   if (ibus) {
-    ibus_bus_request_name (bus, "org.freedesktop.IBus.Varnam", 0);
+    ibus_bus_request_name (bus, busName->str, 0);
   }
   else {
     IBusComponent *component;
-    component = ibus_component_new ("org.freedesktop.IBus.Varnam",
+    component = ibus_component_new (busName->str,
         "Varnam input engine",
         "0.1",
         "MIT",
@@ -127,6 +129,7 @@ init (void)
   /* Initialize varnam handle */
   varnam_engine_init_handle (langCode);
   g_string_free (engineName, TRUE);
+  g_string_free (busName, TRUE);
 }
 
 int main(int argc, char **argv)

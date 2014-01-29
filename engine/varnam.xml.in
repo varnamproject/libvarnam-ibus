@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <component>
-    <name>org.freedesktop.IBus.Varnam</name>
-    <description>Varnam Input Engine</description>
-    <exec>${CMAKE_INSTALL_PREFIX}/bin/ibus-engine-varnam --ibus -l ${VARNAM_ENGINE_LANG_CODE}</exec>
-	<version>0.1</version>
-	<author>Navaneeth K N</author>
-	<license>MIT</license>
-    <homepage>https://gitorious.org/varnamproject/</homepage>
-	<textdomain>ibus-varnam</textdomain>
+  <name>org.freedesktop.IBus.Varnam.${VARNAM_ENGINE_LANG_CODE}</name>
+  <description>Varnam Input Engine</description>
+  <exec>${CMAKE_INSTALL_PREFIX}/bin/ibus-engine-varnam --ibus -l ${VARNAM_ENGINE_LANG_CODE}</exec>
+  <version>0.1</version>
+  <author>Navaneeth K N</author>
+  <license>MIT</license>
+  <homepage>https://gitorious.org/varnamproject/</homepage>
+  <textdomain>ibus-varnam</textdomain>
 
-	<engines>
-        <engine>
-            <name>Varnam.${VARNAM_ENGINE_LANG_CODE}</name>
-            <language>${VARNAM_ENGINE_LANG_CODE}</language>
-            <license>MIT</license>
-            <author>Navaneeth &lt;navaneethkn@gmail.com&gt;</author>
-            <icon>/usr/share/ibus-tmpl/icons/ibus-enchant.svg</icon>
-            <layout>us</layout>
-            <longname>Varnam.${VARNAM_ENGINE_LANG_CODE}</longname>
-            <description>Varnam Input Method</description>
-            <rank>0</rank>
-        </engine>
-    </engines>
+  <engines>
+    <engine>
+      <name>Varnam.${VARNAM_ENGINE_LANG_CODE}</name>
+      <language>${VARNAM_ENGINE_LANG_CODE}</language>
+      <license>MIT</license>
+      <author>Navaneeth &lt;navaneethkn@gmail.com&gt;</author>
+      <icon>/usr/share/ibus-tmpl/icons/ibus-enchant.svg</icon>
+      <layout>us</layout>
+      <longname>Varnam.${VARNAM_ENGINE_LANG_CODE}</longname>
+      <description>Varnam Input Method</description>
+      <rank>0</rank>
+    </engine>
+  </engines>
 </component>
