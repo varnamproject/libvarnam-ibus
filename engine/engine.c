@@ -82,18 +82,11 @@ void varnam_engine_init_handle (const gchar *langCode)
   int rc;
 
   if (handle == NULL) {
-    if (strcmp (langCode, "ml") == 0) {
-      rc = varnam_init_from_lang ("ml", &handle, &msg);
-      if (rc != VARNAM_SUCCESS) {
-        g_message ("Error initializing varnam. %s\n", msg);
-        handle = NULL;
-      }
+    rc = varnam_init_from_lang (langCode, &handle, &msg);
+    if (rc != VARNAM_SUCCESS) {
+      g_message ("Error initializing varnam. %s\n", msg);
+      handle = NULL;
     }
-    else {
-      g_message ("Incorrect language code: %s\n", langCode);
-      return;
-    }
-
   }
 }
 
