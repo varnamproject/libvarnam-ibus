@@ -15,7 +15,7 @@
       <language>${VARNAM_ENGINE_LANG_CODE}</language>
       <license>MIT</license>
       <author>Navaneeth &lt;navaneethkn@gmail.com&gt;</author>
-      <icon>/usr/share/ibus-tmpl/icons/ibus-enchant.svg</icon>
+      <icon>${CMAKE_INSTALL_PREFIX}/share/ibus-varnam/icons/varnam.png</icon>
       <layout>us</layout>
       <longname>Varnam.${VARNAM_ENGINE_LANG_CODE}</longname>
       <description>Varnam Input Method</description>

@@ -34,3 +34,4 @@ add_subdirectory(common)
 add_subdirectory(engine)
 add_subdirectory(sync)
 
+install(FILES icons/varnam.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/ibus-varnam/icons)
