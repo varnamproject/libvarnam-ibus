@@ -35,3 +35,15 @@ add_subdirectory(engine)
 add_subdirectory(sync)
 
 install(FILES icons/varnam.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/ibus-varnam/icons)
+
+set(CPACK_GENERATOR "DEB")
+set(CPACK_PACKAGE_NAME "varnam-ibus-engine")
+set(CPACK_PACKAGE_VERSION "0.1.1")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "ibus (>= 1.5)")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Navaneeth K N")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "IBus engine for varnamproject")
+set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/debian/postinst" )
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+
+include(CPack)

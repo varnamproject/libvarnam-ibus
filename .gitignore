@@ -34,3 +34,7 @@ varnam-sync
 varnam.hi.xml
 varnam.ml.xml
 
+*.deb
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages/
