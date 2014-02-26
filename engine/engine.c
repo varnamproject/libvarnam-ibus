@@ -151,7 +151,6 @@ ibus_varnam_engine_update_lookup_table (IBusVarnamEngine *engine)
     ibus_lookup_table_append_candidate (engine->table, ibus_text_new_from_string (word->text));
   }
   ibus_lookup_table_append_candidate (engine->table, ibus_text_new_from_string (engine->preedit->str));
-
   ibus_engine_update_lookup_table ((IBusEngine *) engine, engine->table, TRUE);
 }
 
@@ -304,6 +303,10 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         g_string_erase (varnamEngine->preedit, varnamEngine->cursor_pos, 1);
         ibus_varnam_engine_update_preedit (varnamEngine);
         ibus_varnam_engine_update_lookup_table (varnamEngine);
+        if (varnamEngine->preedit->len == 0) {
+          /* Current backspace has cleared the preedit. Need to reset the engine state */
+          ibus_varnam_engine_clear_state (varnamEngine);
+        }
       }
       return TRUE;
 
@@ -330,6 +333,10 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
 
   if (keyval <= 128) {
     if (varnamEngine->preedit->len == 0) {
+      /* We are starting a new word. Now there could be a word selected in the text field
+       * and we may be typing over the selection. In this case to clear the selection
+       * we commit a empty text which will trigger the textfield to clear the selection.
+       * If there is no selection, this won't affect anything */
       tmp = ibus_text_new_from_static_string ("");
       ibus_engine_commit_text ((IBusEngine *) varnamEngine, tmp);
     }
