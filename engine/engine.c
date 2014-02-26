@@ -233,7 +233,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     else
       return TRUE;
   }
-
+ 
   switch (keyval) {
     case IBUS_space:
       text = ibus_varnam_engine_get_candidate (varnamEngine);
@@ -329,6 +329,10 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
   }
 
   if (keyval <= 128) {
+    if (varnamEngine->preedit->len == 0) {
+      tmp = ibus_text_new_from_static_string ("");
+      ibus_engine_commit_text ((IBusEngine *) varnamEngine, tmp);
+    }
     g_string_insert_c (varnamEngine->preedit, varnamEngine->cursor_pos, keyval);
     varnamEngine->cursor_pos ++;
     ibus_varnam_engine_update_preedit (varnamEngine);
