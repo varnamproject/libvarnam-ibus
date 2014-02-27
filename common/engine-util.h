@@ -30,5 +30,6 @@
 GString* ibus_varnam_engine_get_config_dir();
 GString* ibus_varnam_engine_get_data_dir();
 void ibus_varnam_engine_persist_key_file (GKeyFile *keyFile, GString *filePath);
+void enable_logging (gchar *componentName, gchar *langCode);
 
 #endif

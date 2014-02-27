@@ -26,6 +26,47 @@
 #include <glib.h>
 #include "engine-util.h"
 
+static gchar *langCode = NULL;
+static gchar *componentName = NULL;
+static FILE *logfile = NULL;
+static void
+glib_log_handler (const gchar *logDomain, GLogLevelFlags logLevel, const gchar *message, gpointer data)
+{
+  GString *logs;
+
+  if (logfile == NULL) {
+    logs = ibus_varnam_engine_get_config_dir ();
+    if (logs == NULL)
+      return;
+
+    g_string_append (logs, "/logs");
+    if (g_mkdir_with_parents (logs->str, 0755) == -1) {
+      g_printerr ("Failed to create logs directory: %s. Logging to file will be disabled\n", logs->str);
+    }
+
+    g_string_append_printf (logs, "/%s-logs-%s.txt", componentName, langCode);
+    logfile = fopen (logs->str, "a");
+    if (logfile == NULL) {
+      g_printerr ("Failed to create logs: %s. Logging to file will be disabled\n", logs->str);
+      g_string_free (logs, TRUE);
+      return;
+    }
+    g_string_free (logs, TRUE);
+  }
+
+  fprintf (logfile, "%s %s", logDomain, message);
+  fflush (logfile);
+  g_print ("%s %s", logDomain, message);
+}
+
+void
+enable_logging (gchar *cname, gchar *lcode)
+{
+  componentName = cname;
+  langCode = lcode;
+  g_log_set_default_handler (glib_log_handler, NULL);
+}
+
 GString*
 ibus_varnam_engine_get_config_dir()
 {
@@ -44,7 +85,7 @@ ibus_varnam_engine_get_data_dir()
 {
   GString *dataDir;
   dataDir = g_string_new (g_get_user_data_dir ());
-  g_string_append (dataDir, "/varnam");
+  g_string_append (dataDir, "/varnam/suggestions");
   if (g_mkdir_with_parents (dataDir->str, 0755) == -1) {
     g_printerr ("Failed to create config directory: %s\n", dataDir->str);
   }

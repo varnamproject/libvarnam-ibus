@@ -35,38 +35,6 @@ static gboolean ibus = FALSE;
 static gboolean verbose = FALSE;
 static gchar *langCode = NULL;
 
-static FILE *logfile = NULL;
-static void
-glib_log_handler (const gchar *logDomain, GLogLevelFlags logLevel, const gchar *message, gpointer data)
-{
-  GString *logs;
-
-  if (logfile == NULL) {
-    logs = ibus_varnam_engine_get_config_dir ();
-    if (logs == NULL)
-      return;
-
-    g_string_append (logs, "/logs");
-    if (g_mkdir_with_parents (logs->str, 0755) == -1) {
-      g_printerr ("Failed to create logs directory: %s. Logging to file will be disabled\n", logs->str);
-    }
-
-    g_string_append_printf (logs, "/logs-%s.txt", langCode);
-    logfile = fopen (logs->str, "a");
-    if (logfile == NULL) {
-      g_printerr ("Failed to create logs: %s. Logging to file will be disabled\n", logs->str);
-      g_string_free (logs, TRUE);
-      return;
-    }
-    g_string_free (logs, TRUE);
-  }
-
-  fprintf (logfile, "%s %s", logDomain, message);
-  fflush (logfile);
-  g_print ("%s %s", logDomain, message);
-}
-
-
 static const GOptionEntry entries[] =
 {
   { "ibus", 'i', 0, G_OPTION_ARG_NONE, &ibus, "component is executed by ibus", NULL },
@@ -137,8 +105,6 @@ int main(int argc, char **argv)
   GError *error = NULL;
   GOptionContext *context;
 
-  g_log_set_default_handler (glib_log_handler, NULL);
-
   /* Parse the command line */
   context = g_option_context_new ("- ibus engine");
   g_option_context_add_main_entries (context, entries, "ibus-varnam");
@@ -153,6 +119,8 @@ int main(int argc, char **argv)
     g_printerr ("Language code is not set\n");
     return (-1);
   }
+
+  enable_logging ("engine", langCode);
 
   /* Go */
   init ();
