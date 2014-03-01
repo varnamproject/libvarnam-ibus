@@ -106,6 +106,7 @@ ibus_varnam_engine_init (IBusVarnamEngine *engine)
   engine->preedit = g_string_new ("");
   engine->cursor_pos = 0;
   engine->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
+  ibus_lookup_table_set_orientation (engine->table, IBUS_ORIENTATION_HORIZONTAL);
   g_object_ref_sink (engine->table);
 }
 
