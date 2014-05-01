@@ -54,6 +54,7 @@ int main (int argc, char **argv)
 
   if (langCode == NULL) {
     g_printerr ("Language code is not set\n");
+    g_printerr("usage : varnam-sync -l <language code>\n");
     return (-1);
   }
 
