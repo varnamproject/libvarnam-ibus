@@ -117,6 +117,8 @@ int main(int argc, char **argv)
 
   if (langCode == NULL) {
     g_printerr ("Language code is not set\n");
+    g_printerr("usage : <command> -l <language_code>\n");
+    g_printerr("eg : ibus-engine-varnam -l ml\n");
     return (-1);
   }
 
