@@ -9,11 +9,24 @@ list (APPEND varnam_engine_sources
   main.c
 )
 
-foreach(langCode ml hi)
-    set(VARNAM_ENGINE_LANG_CODE ${langCode})
-    configure_file(varnam.xml.in varnam.${VARNAM_ENGINE_LANG_CODE}.xml)
-    install(FILES varnam.${VARNAM_ENGINE_LANG_CODE}.xml DESTINATION /usr/share/ibus/component)
-endforeach(langCode)
+# Format of the below list should be
+# iBusLangCode,varnamLangCode,engineName,description
+list (APPEND component_xml_files
+  "ml,ml,Varnam,Varnam input method"
+  "ml,ml-inscript,Varnam Inscript,Varnam input method for inscript"
+  "hi,hi,Hindi,Varnam input method"
+)
+
+foreach(componentXmlFile ${component_xml_files})
+    # replaces , with ;. CMake uses ; for list
+    STRING(REGEX REPLACE "," ";" componentXmlFile ${componentXmlFile})
+    list(GET componentXmlFile 0 ibusLangCode)
+    list(GET componentXmlFile 1 varnamLangCode)
+    list(GET componentXmlFile 2 varnamEngineName)
+    list(GET componentXmlFile 3 varnamEngineDescription)
+    configure_file(varnam.xml.in varnam.${varnamLangCode}.xml)
+    install(FILES varnam.${varnamLangCode}.xml DESTINATION /usr/share/ibus/component)
+endforeach(componentXmlFile)
 
 set(engine_executable_name ibus-engine-varnam)
 add_executable(${engine_executable_name} ${varnam_engine_sources} $<TARGET_OBJECTS:common>)
