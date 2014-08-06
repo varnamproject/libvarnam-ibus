@@ -2,7 +2,7 @@
 <component>
   <name>org.freedesktop.IBus.Varnam.${varnamLangCode}</name>
   <description>Varnam Input Engine</description>
-  <exec>${CMAKE_INSTALL_PREFIX}/bin/ibus-engine-varnam --ibus -l ${varnamLangCode}</exec>
+  <exec>${CMAKE_INSTALL_PREFIX}/bin/ibus-engine-varnam --ibus -l ${varnamLangCode} -n "varnam.${varnamLangCode}"</exec>
   <version>0.1</version>
   <author>Navaneeth K N</author>
   <license>MIT</license>
@@ -11,7 +11,7 @@
 
   <engines>
     <engine>
-      <name>${varnamEngineName}</name>
+      <name>varnam.${varnamLangCode}</name>
       <language>${ibusLangCode}</language>
       <license>MIT</license>
       <author>Navaneeth &lt;navaneethkn@gmail.com&gt;</author>

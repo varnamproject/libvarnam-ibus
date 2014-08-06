@@ -34,12 +34,14 @@ static IBusFactory *factory = NULL;
 static gboolean ibus = FALSE;
 static gboolean verbose = FALSE;
 static gchar *langCode = NULL;
+static gchar *engineName = NULL;
 
 static const GOptionEntry entries[] =
 {
   { "ibus", 'i', 0, G_OPTION_ARG_NONE, &ibus, "component is executed by ibus", NULL },
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "verbose", NULL },
   { "language", 'l', 0, G_OPTION_ARG_STRING, &langCode, "Language code for this engine", NULL },
+  { "engine-name", 'n', 0, G_OPTION_ARG_STRING, &engineName, "Engine name", NULL },
   { NULL },
 };
 
@@ -53,9 +55,7 @@ ibus_disconnected_cb (IBusBus  *bus,
 static void
 init (void)
 {
-  GString *engineName, *busName;
-  engineName = g_string_new ("Varnam.");
-  g_string_append (engineName, langCode);
+  GString *busName;
   busName = g_string_new ("org.freedesktop.IBus.Varnam.");
   g_string_append (busName, langCode);
 
@@ -67,7 +67,7 @@ init (void)
 
   factory = ibus_factory_new (ibus_bus_get_connection (bus));
   g_object_ref_sink (factory);
-  ibus_factory_add_engine (factory, engineName->str, IBUS_TYPE_VARNAM_ENGINE);
+  ibus_factory_add_engine (factory, engineName, IBUS_TYPE_VARNAM_ENGINE);
 
   if (ibus) {
     ibus_bus_request_name (bus, busName->str, 0);
@@ -83,8 +83,8 @@ init (void)
         "",
         "ibus-varnam");
     ibus_component_add_engine (component,
-        ibus_engine_desc_new (engineName->str,
-          engineName->str,
+        ibus_engine_desc_new (engineName,
+          engineName,
           "Varnam input engine",
           langCode,
           "MIT",
@@ -96,7 +96,6 @@ init (void)
 
   /* Initialize varnam handle */
   varnam_engine_init_handle (langCode);
-  g_string_free (engineName, TRUE);
   g_string_free (busName, TRUE);
 }
 
@@ -119,6 +118,12 @@ int main(int argc, char **argv)
     g_printerr ("Language code is not set\n");
     g_printerr("usage : <command> -l <language_code>\n");
     g_printerr("eg : ibus-engine-varnam -l ml\n");
+    return (-1);
+  }
+
+  if (engineName == NULL) {
+    g_printerr ("Engine name is not set\n");
+    g_printerr("usage : <command> -n engine-name\n");
     return (-1);
   }
 

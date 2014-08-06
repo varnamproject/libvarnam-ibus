@@ -14,7 +14,7 @@ list (APPEND varnam_engine_sources
 list (APPEND component_xml_files
   "ml,ml,Varnam,Varnam input method"
   "ml,ml-inscript,Varnam Inscript,Varnam input method for inscript"
-  "hi,hi,Hindi,Varnam input method"
+  "hi,hi,Varnam,Varnam input method"
 )
 
 foreach(componentXmlFile ${component_xml_files})

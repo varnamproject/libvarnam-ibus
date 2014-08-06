@@ -33,6 +33,7 @@ varnam-sync
 # ibus xml files
 varnam.hi.xml
 varnam.ml.xml
+varnam.ml-inscript.xml
 
 *.deb
 CPackConfig.cmake
