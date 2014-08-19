@@ -205,12 +205,36 @@ ibus_varnam_engine_get_candidate (IBusVarnamEngine *engine)
 
 #define is_alpha(c) (((c) >= IBUS_a && (c) <= IBUS_z) || ((c) >= IBUS_A && (c) <= IBUS_Z))
 
+static char*
+set_word_breaks()
+{ 
+  /*Maximum number of word breakers in the scheme file.
+  Hard coded. Might lead to bugs in the future. Change*/
+  static char *list=0;
+  int max_count=25;
+
+  if(list == 0)
+  {
+    list = (char*)malloc(max_count);
+    varnam_word_breakers(handle, list, max_count);
+  }
+  return list;
+}
+
 static gboolean
 is_word_break (guint keyval)
 {
-  if (keyval == 46 || keyval == 44 || keyval == 63 || keyval == 33 || keyval == 40 || keyval == 41 || keyval == 34 || keyval == 59 || keyval == 39)
-    return TRUE;
-  return FALSE;
+
+  int i;
+  char *list = set_word_breaks();
+
+  for(i=0; list[i] != '\0'; i++)
+  {
+    if((int)list[i] == keyval)
+      return true;
+  }
+
+  return false;
 }
 
 static gboolean
