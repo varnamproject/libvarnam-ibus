@@ -82,7 +82,7 @@ void varnam_engine_init_handle (const gchar *langCode)
   int rc;
 
   if (handle == NULL) {
-    rc = varnam_init_from_lang (langCode, &handle, &msg);
+    rc = varnam_init_from_id (langCode, &handle, &msg);
     if (rc != VARNAM_SUCCESS) {
       g_message ("Error initializing varnam. %s\n", msg);
       handle = NULL;
