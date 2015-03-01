@@ -68,7 +68,7 @@ int main (int argc, char **argv)
 
     varnam *handle = NULL;
     char *msg;
-    int rc = varnam_init_from_lang (langCode, &handle, &msg);
+    int rc = varnam_init_from_id (langCode, &handle, &msg);
     if (rc != VARNAM_SUCCESS) {
       g_message ("Failed to initialize varnam. %s\n", msg);
       return -1;
