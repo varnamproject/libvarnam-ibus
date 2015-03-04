@@ -156,6 +156,34 @@ ibus_varnam_engine_update_lookup_table (IBusVarnamEngine *engine)
 }
 
 static void
+ibus_varnam_engine_update_lookup_table_with_text(IBusVarnamEngine *engine, gchar *text){
+  varray *words;
+  vword *word;
+  int rc, i;
+
+  if (engine->preedit->len == 0) {
+    ibus_engine_hide_lookup_table ((IBusEngine *) engine);
+    return;
+  }
+
+  ibus_lookup_table_clear (engine->table);
+
+  rc = varnam_transliterate (handle, text, &words);
+  if (rc != VARNAM_SUCCESS) {
+    g_message ("Error transliterating: %s. %s\n", text, varnam_get_last_error (handle));
+    ibus_engine_hide_lookup_table ((IBusEngine *) engine);
+    return;
+  }
+
+  for (i = 0; i < varray_length (words); i++) {
+    word = varray_get (words, i);
+    ibus_lookup_table_append_candidate (engine->table, ibus_text_new_from_string (word->text));
+  }
+  ibus_lookup_table_append_candidate (engine->table, ibus_text_new_from_string (engine->preedit->str));
+  ibus_engine_update_lookup_table ((IBusEngine *) engine, engine->table, TRUE);
+}
+
+static void
 ibus_varnam_engine_update_preedit (IBusVarnamEngine *engine)
 {
   IBusText *text;
@@ -332,6 +360,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     return FALSE;
   }
 
+
   if (keyval <= 128) {
     if (varnamEngine->preedit->len == 0) {
       /* We are starting a new word. Now there could be a word selected in the text field
@@ -343,8 +372,13 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     }
     g_string_insert_c (varnamEngine->preedit, varnamEngine->cursor_pos, keyval);
     varnamEngine->cursor_pos ++;
-    ibus_varnam_engine_update_preedit (varnamEngine);
-    ibus_varnam_engine_update_lookup_table (varnamEngine);
+    /*ibus_varnam_engine_update_preedit (varnamEngine);*/
+    /*ibus_varnam_engine_update_lookup_table (varnamEngine);*/
+    ibus_varnam_engine_update_lookup_table_with_text(varnamEngine, varnamEngine->preedit->str);
+    text = ibus_varnam_engine_get_candidate (varnamEngine);
+ 	 /*tmp = ibus_text_new_from_printf ("%s ", ibus_text_get_text (text));*/
+ 	 ibus_engine_hide_preedit_text((IBusEngine*)varnamEngine);
+  	ibus_engine_update_preedit_text((IBusEngine*)varnamEngine, text, varnamEngine->cursor_pos, TRUE);
     return TRUE;
   }
 
