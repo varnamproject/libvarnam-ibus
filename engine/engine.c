@@ -233,12 +233,36 @@ ibus_varnam_engine_get_candidate (IBusVarnamEngine *engine)
 
 #define is_alpha(c) (((c) >= IBUS_a && (c) <= IBUS_z) || ((c) >= IBUS_A && (c) <= IBUS_Z))
 
+static char*
+set_word_breaks()
+{ 
+  /*Maximum number of word breakers in the scheme file.
+  Hard coded. Might lead to bugs in the future. Change*/
+  static char *list=0;
+  int allocated=25;
+
+  if(list == 0)
+  {
+    list = (char*)malloc(allocated);
+    varnam_word_breakers(handle, list, allocated);
+  }
+  return list;
+}
+
 static gboolean
 is_word_break (guint keyval)
 {
-  if (keyval == 46 || keyval == 44 || keyval == 63 || keyval == 33 || keyval == 40 || keyval == 41 || keyval == 34 || keyval == 59 || keyval == 39)
-    return TRUE;
-  return FALSE;
+
+  int i;
+  char *list = set_word_breaks();
+
+  for(i=0; list[i] != '\0'; i++)
+  {
+    if((int)list[i] == keyval)
+      return true;
+  }
+
+  return false;
 }
 
 static gboolean
@@ -360,7 +384,16 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     return FALSE;
   }
 
+  if (is_word_break (keyval)) {
+    text = ibus_varnam_engine_get_candidate (varnamEngine);
+    if (text != NULL) {
+      tmp = ibus_text_new_from_printf ("%s%c", ibus_text_get_text (text), keyval);
+      return ibus_varnam_engine_commit (varnamEngine, tmp, TRUE);
+    }
 
+    return FALSE;
+  }
+  
   if (keyval <= 128) {
     if (varnamEngine->preedit->len == 0) {
       /* We are starting a new word. Now there could be a word selected in the text field
