@@ -234,31 +234,34 @@ ibus_varnam_engine_get_candidate (IBusVarnamEngine *engine)
 #define is_alpha(c) (((c) >= IBUS_a && (c) <= IBUS_z) || ((c) >= IBUS_A && (c) <= IBUS_Z))
 
 static char*
-set_word_breaks()
+set_word_breakers()
 { 
+  static char *breakerList=0;
   /*Maximum number of word breakers in the scheme file.
   Hard coded. Might lead to bugs in the future. Change*/
-  static char *list=0;
-  int allocated=25;
+  int allocatedSize=1;
 
-  if(list == 0)
+  if(breakerList == 0)
   {
-    list = (char*)malloc(allocated);
-    varnam_word_breakers(handle, list, allocated);
+    breakerList = (char*)malloc(allocatedSize);
+    /*varnam_word_breakers calls realloc on breakerList if
+    memory allocated is too small*/
+    varnam_word_breakers(handle, breakerList, allocatedSize);
   }
-  return list;
+
+  /*Never freed. Memory leak. Fix*/
+  return breakerList;
 }
 
 static gboolean
-is_word_break (guint keyval)
+is_word_breaker (guint keyval, char *breakerList)
 {
 
   int i;
-  char *list = set_word_breaks();
 
-  for(i=0; list[i] != '\0'; i++)
+  for(i=0; breakerList[i] != '\0'; i++)
   {
-    if((int)list[i] == keyval)
+    if((int)breakerList[i] == keyval)
       return true;
   }
 
@@ -274,6 +277,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
   IBusText *text, *tmp;
   IBusVarnamEngine *varnamEngine = (IBusVarnamEngine *) engine;
   int ncandidates = 0;
+  char *breakerList=0;
 
   if (modifiers & IBUS_RELEASE_MASK)
     return FALSE;
@@ -287,6 +291,8 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       return TRUE;
   }
  
+  /*A list containing all word breakers*/
+  breakerList = set_word_breakers();
   ncandidates = ibus_lookup_table_get_number_of_candidates(varnamEngine->table);
 
   switch (keyval) {
@@ -440,6 +446,9 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         g_string_erase (varnamEngine->preedit, varnamEngine->cursor_pos, 1);
         ibus_varnam_engine_update_preedit (varnamEngine);
         ibus_varnam_engine_update_lookup_table (varnamEngine);
+        text = ibus_varnam_engine_get_candidate (varnamEngine);
+        ibus_engine_hide_preedit_text((IBusEngine*)varnamEngine);
+        ibus_engine_update_preedit_text((IBusEngine*)varnamEngine, text, varnamEngine->cursor_pos, TRUE);
         if (varnamEngine->preedit->len == 0) {
           /* Current backspace has cleared the preedit. Need to reset the engine state */
           ibus_varnam_engine_clear_state (varnamEngine);
@@ -458,7 +467,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       return TRUE;
   }
 
-  if (is_word_break (keyval)) {
+  if (is_word_breaker (keyval, breakerList)) {
     text = ibus_varnam_engine_get_candidate (varnamEngine);
     if (text != NULL) {
       tmp = ibus_text_new_from_printf ("%s%c", ibus_text_get_text (text), keyval);
@@ -468,16 +477,6 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     return FALSE;
   }
 
-  if (is_word_break (keyval)) {
-    text = ibus_varnam_engine_get_candidate (varnamEngine);
-    if (text != NULL) {
-      tmp = ibus_text_new_from_printf ("%s%c", ibus_text_get_text (text), keyval);
-      return ibus_varnam_engine_commit (varnamEngine, tmp, TRUE);
-    }
-
-    return FALSE;
-  }
-  
   if (keyval <= 128) {
     if (varnamEngine->preedit->len == 0) {
       /* We are starting a new word. Now there could be a word selected in the text field
@@ -493,8 +492,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     /*ibus_varnam_engine_update_lookup_table (varnamEngine);*/
     ibus_varnam_engine_update_lookup_table_with_text(varnamEngine, varnamEngine->preedit->str);
     text = ibus_varnam_engine_get_candidate (varnamEngine);
- 	 /*tmp = ibus_text_new_from_printf ("%s ", ibus_text_get_text (text));*/
- 	 ibus_engine_hide_preedit_text((IBusEngine*)varnamEngine);
+ 	  ibus_engine_hide_preedit_text((IBusEngine*)varnamEngine);
   	ibus_engine_update_preedit_text((IBusEngine*)varnamEngine, text, varnamEngine->cursor_pos, TRUE);
     return TRUE;
   }
