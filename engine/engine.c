@@ -195,12 +195,37 @@ ibus_varnam_engine_commit (IBusVarnamEngine *engine, IBusText *text, gboolean sh
 }
 
 static IBusText*
-ibus_varnam_engine_get_candidate (IBusVarnamEngine *engine)
+ibus_varnam_engine_get_candidate_at (IBusVarnamEngine *engine, guint index)
 {
   if (ibus_lookup_table_get_number_of_candidates (engine->table) == 0)
     return NULL;
 
-  return ibus_lookup_table_get_candidate (engine->table, ibus_lookup_table_get_cursor_pos (engine->table));
+  return ibus_lookup_table_get_candidate (engine->table, index);
+}
+
+static IBusText*
+ibus_varnam_engine_get_candidate (IBusVarnamEngine *engine)
+{
+  return ibus_varnam_engine_get_candidate_at (engine, ibus_lookup_table_get_cursor_pos (engine->table));
+}
+
+static gboolean
+ibus_varnam_engine_commit_candidate_at (IBusVarnamEngine *engine, guint index)
+{
+  IBusText *text;
+  text = ibus_varnam_engine_get_candidate_at (engine, index);
+  if (text != NULL) {
+    return ibus_varnam_engine_commit (engine, text, TRUE);
+  }
+
+  if (ibus_lookup_table_get_number_of_candidates (engine->table) != 0) {
+    /* Candidate window is visible and we are unable to get the candidate text at specified index.
+     * This happens only when user specifies an index which is above the available candidates count.
+     * In this case, returning TRUE so that this keystroke will not be considered */
+    return TRUE;
+  }
+
+  return FALSE;
 }
 
 #define is_alpha(c) (((c) >= IBUS_a && (c) <= IBUS_z) || ((c) >= IBUS_A && (c) <= IBUS_Z))
@@ -320,6 +345,43 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         ibus_varnam_engine_update_lookup_table (varnamEngine);
       }
       return TRUE;
+    case IBUS_1:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 0);
+    case IBUS_2:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 1);
+    case IBUS_3:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 2);
+    case IBUS_4:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 3);
+    case IBUS_5:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 4);
+    case IBUS_6:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 5);
+    case IBUS_7:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 6);
+    case IBUS_8:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 7);
+    case IBUS_9:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 8);
+    case IBUS_KP_1:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 0);
+    case IBUS_KP_2:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 1);
+    case IBUS_KP_3:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 2);
+    case IBUS_KP_4:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 3);
+    case IBUS_KP_5:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 4);
+    case IBUS_KP_6:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 5);
+    case IBUS_KP_7:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 6);
+    case IBUS_KP_8:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 7);
+    case IBUS_KP_9:
+      return ibus_varnam_engine_commit_candidate_at (varnamEngine, 8);
+
   }
 
   if (is_word_break (keyval)) {
