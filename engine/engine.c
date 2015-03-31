@@ -103,11 +103,19 @@ ibus_varnam_engine_class_init (IBusVarnamEngineClass *klass)
 static void
 ibus_varnam_engine_init (IBusVarnamEngine *engine)
 {
+  IBusProperty *foo;
+  IBusPropList *properties;
+
   engine->preedit = g_string_new ("");
   engine->cursor_pos = 0;
   engine->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
   ibus_lookup_table_set_orientation (engine->table, IBUS_ORIENTATION_VERTICAL);
   g_object_ref_sink (engine->table);
+
+  foo = ibus_property_new ("foo", PROP_TYPE_TOGGLE, ibus_text_new_from_string ("Test foo"), NULL, NULL, false, true, PROP_STATE_UNCHECKED, NULL);
+  properties = ibus_prop_list_new ();
+  ibus_prop_list_append (properties, foo);
+  ibus_engine_register_properties ((IBusEngine *) engine, properties);
 }
 
 static void

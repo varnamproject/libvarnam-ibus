@@ -39,3 +39,5 @@ varnam.ml-inscript.xml
 CPackConfig.cmake
 CPackSourceConfig.cmake
 _CPack_Packages/
+
+ibus-engine-varnam-prefs
