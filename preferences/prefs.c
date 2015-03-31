@@ -8,6 +8,15 @@
 
 const char *glade_search_path[] = {"./preferences/prefs.glade", "/usr/local/share/varnam/ibus/prefs.glade", "/usr/share/varnam/ibus/prefs.glade"};
 
+void toggled(GtkCheckButton *checkButton, gpointer data)
+{
+  if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(checkButton))) {
+    g_message ("ACTIVE");
+  } else {
+    g_message ("INACTIVE");
+  }
+}
+
 static gboolean
 load_glade_file (GtkBuilder *builder)
 {
