@@ -34,6 +34,7 @@ struct _IBusVarnamEngine {
   GString *preedit;
   gint cursor_pos;
   IBusLookupTable *table;
+  char *breakerList;
 };
 
 struct _IBusVarnamEngineClass {
@@ -45,7 +46,7 @@ struct _IBusVarnamEngineClass {
 /*static void	ibus_varnam_engine_init		(IBusVarnamEngine		*engine);*/
 static void	ibus_varnam_engine_destroy (IBusVarnamEngine *engine);
 static gboolean ibus_varnam_engine_process_key_event (IBusEngine  *engine, guint keyval, guint keycode, guint modifiers);
-
+static char* get_word_breakers();
 /*[>static void ibus_varnam_engine_focus_in    (IBusEngine             *engine);<]*/
 /*static void ibus_varnam_engine_focus_out   (IBusEngine             *engine);*/
 /*static void ibus_varnam_engine_reset       (IBusEngine             *engine);*/
@@ -109,6 +110,7 @@ ibus_varnam_engine_init (IBusVarnamEngine *engine)
   engine->preedit = g_string_new ("");
   engine->cursor_pos = 0;
   engine->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
+  engine->breakerList = get_word_breakers();
   ibus_lookup_table_set_orientation (engine->table, IBUS_ORIENTATION_VERTICAL);
   g_object_ref_sink (engine->table);
 
@@ -267,11 +269,9 @@ ibus_varnam_engine_commit_candidate_at (IBusVarnamEngine *engine, guint index)
 #define is_alpha(c) (((c) >= IBUS_a && (c) <= IBUS_z) || ((c) >= IBUS_A && (c) <= IBUS_Z))
 
 static char*
-set_word_breakers()
+get_word_breakers()
 { 
   static char *breakerList=0;
-  /*Maximum number of word breakers in the scheme file.
-  Hard coded. Might lead to bugs in the future. Change*/
   int allocatedSize=1;
 
   if(breakerList == 0)
@@ -282,7 +282,6 @@ set_word_breakers()
     varnam_word_breakers(handle, breakerList, allocatedSize);
   }
 
-  /*Never freed. Memory leak. Fix*/
   return breakerList;
 }
 
@@ -310,7 +309,6 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
   IBusText *text, *tmp;
   IBusVarnamEngine *varnamEngine = (IBusVarnamEngine *) engine;
   int ncandidates = 0;
-  char *breakerList;
 
   if (modifiers & IBUS_RELEASE_MASK)
     return FALSE;
@@ -324,8 +322,6 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       return TRUE;
   }
  
-  /*A list containing all word breakers*/
-  breakerList = set_word_breakers();
   ncandidates = ibus_lookup_table_get_number_of_candidates(varnamEngine->table);
 
   switch (keyval) {
@@ -457,7 +453,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
 
   }
 
-  if (is_word_breaker (keyval, breakerList)) {
+  if (is_word_breaker (keyval, varnamEngine->breakerList)) {
     text = ibus_varnam_engine_get_candidate (varnamEngine);
     if (text != NULL) {
       tmp = ibus_text_new_from_printf ("%s%c", ibus_text_get_text (text), keyval);
