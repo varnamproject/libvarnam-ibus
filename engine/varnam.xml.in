@@ -15,11 +15,12 @@
       <language>${ibusLangCode}</language>
       <license>MIT</license>
       <author>Navaneeth &lt;navaneethkn@gmail.com&gt;</author>
-      <icon>${CMAKE_INSTALL_PREFIX}/share/ibus-varnam/icons/varnam.png</icon>
+      <icon>${CMAKE_INSTALL_PREFIX}/share/varnam/ibus/icons/varnam.png</icon>
       <layout>us</layout>
       <longname>${varnamEngineName}</longname>
       <description>${varnamEngineDescription}</description>
       <rank>0</rank>
+      <setup>${CMAKE_INSTALL_PREFIX}/bin/ibus-engine-varnam-prefs</setup>
     </engine>
   </engines>
 </component>
