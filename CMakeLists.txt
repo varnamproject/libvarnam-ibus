@@ -18,6 +18,7 @@ set(preferences_executable_name ibus-engine-varnam-prefs)
 # Finding required packages
 #################################
 
+FIND_PACKAGE(CURL)
 FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(GLIB REQUIRED glib-2.0>=${GLIB_VER})
 PKG_CHECK_MODULES(IBUS REQUIRED ibus-1.0>=${IBUS_VER})
@@ -35,7 +36,6 @@ file(MAKE_DIRECTORY $ENV{HOME}/.local/share/varnam/suggestions)
 
 add_subdirectory(common)
 add_subdirectory(engine)
-add_subdirectory(sync)
 add_subdirectory(preferences)
 
 install(FILES icons/varnam.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/varnam/ibus/icons)

@@ -26,6 +26,7 @@
 #include <ibus.h>
 #include "engine.h"
 #include <engine-util.h>
+#include "varnamd_proxy.h"
 
 static IBusBus *bus = NULL;
 static IBusFactory *factory = NULL;
@@ -130,6 +131,7 @@ int main(int argc, char **argv)
   enable_logging ("engine", langCode);
 
   /* Go */
+	varnamd_proxy_init();
   init ();
   ibus_main ();
 
