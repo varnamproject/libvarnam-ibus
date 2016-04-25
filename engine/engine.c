@@ -34,6 +34,7 @@ struct _IBusVarnamEngine {
   GString *preedit;
   gint cursor_pos;
   IBusLookupTable *table;
+  char *breakerList;
 };
 
 struct _IBusVarnamEngineClass {
@@ -45,7 +46,7 @@ struct _IBusVarnamEngineClass {
 /*static void	ibus_varnam_engine_init		(IBusVarnamEngine		*engine);*/
 static void	ibus_varnam_engine_destroy (IBusVarnamEngine *engine);
 static gboolean ibus_varnam_engine_process_key_event (IBusEngine  *engine, guint keyval, guint keycode, guint modifiers);
-
+static char* get_word_breakers();
 /*[>static void ibus_varnam_engine_focus_in    (IBusEngine             *engine);<]*/
 /*static void ibus_varnam_engine_focus_out   (IBusEngine             *engine);*/
 /*static void ibus_varnam_engine_reset       (IBusEngine             *engine);*/
@@ -109,6 +110,7 @@ ibus_varnam_engine_init (IBusVarnamEngine *engine)
   engine->preedit = g_string_new ("");
   engine->cursor_pos = 0;
   engine->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
+  engine->breakerList = get_word_breakers();
   ibus_lookup_table_set_orientation (engine->table, IBUS_ORIENTATION_VERTICAL);
   g_object_ref_sink (engine->table);
 
@@ -151,6 +153,34 @@ ibus_varnam_engine_update_lookup_table (IBusVarnamEngine *engine)
   rc = varnam_transliterate (handle, engine->preedit->str, &words);
   if (rc != VARNAM_SUCCESS) {
     g_message ("Error transliterating: %s. %s\n", engine->preedit->str, varnam_get_last_error (handle));
+    ibus_engine_hide_lookup_table ((IBusEngine *) engine);
+    return;
+  }
+
+  for (i = 0; i < varray_length (words); i++) {
+    word = varray_get (words, i);
+    ibus_lookup_table_append_candidate (engine->table, ibus_text_new_from_string (word->text));
+  }
+  ibus_lookup_table_append_candidate (engine->table, ibus_text_new_from_string (engine->preedit->str));
+  ibus_engine_update_lookup_table ((IBusEngine *) engine, engine->table, TRUE);
+}
+
+static void
+ibus_varnam_engine_update_lookup_table_with_text(IBusVarnamEngine *engine, gchar *text){
+  varray *words;
+  vword *word;
+  int rc, i;
+
+  if (engine->preedit->len == 0) {
+    ibus_engine_hide_lookup_table ((IBusEngine *) engine);
+    return;
+  }
+
+  ibus_lookup_table_clear (engine->table);
+
+  rc = varnam_transliterate (handle, text, &words);
+  if (rc != VARNAM_SUCCESS) {
+    g_message ("Error transliterating: %s. %s\n", text, varnam_get_last_error (handle));
     ibus_engine_hide_lookup_table ((IBusEngine *) engine);
     return;
   }
@@ -238,12 +268,36 @@ ibus_varnam_engine_commit_candidate_at (IBusVarnamEngine *engine, guint index)
 
 #define is_alpha(c) (((c) >= IBUS_a && (c) <= IBUS_z) || ((c) >= IBUS_A && (c) <= IBUS_Z))
 
+static char*
+get_word_breakers()
+{ 
+  static char *breakerList=0;
+  int allocatedSize=1;
+
+  if(breakerList == 0)
+  {
+    breakerList = (char*)malloc(allocatedSize);
+    /*varnam_word_breakers calls realloc on breakerList if
+    memory allocated is too small*/
+    varnam_word_breakers(handle, breakerList, allocatedSize);
+  }
+
+  return breakerList;
+}
+
 static gboolean
-is_word_break (guint keyval)
+is_word_breaker (guint keyval, char *breakerList)
 {
-  if (keyval == 46 || keyval == 44 || keyval == 63 || keyval == 33 || keyval == 40 || keyval == 41 || keyval == 34 || keyval == 59 || keyval == 39)
-    return TRUE;
-  return FALSE;
+
+  int i;
+
+  for(i=0; breakerList[i] != '\0'; i++)
+  {
+    if((int)breakerList[i] == keyval)
+      return true;
+  }
+
+  return false;
 }
 
 static gboolean
@@ -254,6 +308,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
 {
   IBusText *text, *tmp;
   IBusVarnamEngine *varnamEngine = (IBusVarnamEngine *) engine;
+  int ncandidates = 0;
 
   if (modifiers & IBUS_RELEASE_MASK)
     return FALSE;
@@ -267,6 +322,8 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       return TRUE;
   }
  
+  ncandidates = ibus_lookup_table_get_number_of_candidates(varnamEngine->table);
+
   switch (keyval) {
     case IBUS_space:
       text = ibus_varnam_engine_get_candidate (varnamEngine);
@@ -337,6 +394,9 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         g_string_erase (varnamEngine->preedit, varnamEngine->cursor_pos, 1);
         ibus_varnam_engine_update_preedit (varnamEngine);
         ibus_varnam_engine_update_lookup_table (varnamEngine);
+        text = ibus_varnam_engine_get_candidate (varnamEngine);
+        ibus_engine_hide_preedit_text((IBusEngine*)varnamEngine);
+        ibus_engine_update_preedit_text((IBusEngine*)varnamEngine, text, varnamEngine->cursor_pos, TRUE);
         if (varnamEngine->preedit->len == 0) {
           /* Current backspace has cleared the preedit. Need to reset the engine state */
           ibus_varnam_engine_clear_state (varnamEngine);
@@ -353,6 +413,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
         ibus_varnam_engine_update_lookup_table (varnamEngine);
       }
       return TRUE;
+    
     case IBUS_1:
       return ibus_varnam_engine_commit_candidate_at (varnamEngine, 0);
     case IBUS_2:
@@ -392,7 +453,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
 
   }
 
-  if (is_word_break (keyval)) {
+  if (is_word_breaker (keyval, varnamEngine->breakerList)) {
     text = ibus_varnam_engine_get_candidate (varnamEngine);
     if (text != NULL) {
       tmp = ibus_text_new_from_printf ("%s%c", ibus_text_get_text (text), keyval);
@@ -413,8 +474,12 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     }
     g_string_insert_c (varnamEngine->preedit, varnamEngine->cursor_pos, keyval);
     varnamEngine->cursor_pos ++;
-    ibus_varnam_engine_update_preedit (varnamEngine);
-    ibus_varnam_engine_update_lookup_table (varnamEngine);
+    /*ibus_varnam_engine_update_preedit (varnamEngine);*/
+    /*ibus_varnam_engine_update_lookup_table (varnamEngine);*/
+    ibus_varnam_engine_update_lookup_table_with_text(varnamEngine, varnamEngine->preedit->str);
+    text = ibus_varnam_engine_get_candidate (varnamEngine);
+ 	  ibus_engine_hide_preedit_text((IBusEngine*)varnamEngine);
+  	ibus_engine_update_preedit_text((IBusEngine*)varnamEngine, text, varnamEngine->cursor_pos, TRUE);
     return TRUE;
   }
 
