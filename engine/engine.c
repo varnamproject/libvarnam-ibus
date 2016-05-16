@@ -238,12 +238,36 @@ ibus_varnam_engine_commit_candidate_at (IBusVarnamEngine *engine, guint index)
 
 #define is_alpha(c) (((c) >= IBUS_a && (c) <= IBUS_z) || ((c) >= IBUS_A && (c) <= IBUS_Z))
 
+static char*
+set_word_breaks()
+{ 
+  /*Maximum number of word breakers in the scheme file.
+  Hard coded. Might lead to bugs in the future. Change*/
+  static char *list=0;
+  int allocated=25;
+
+  if(list == 0)
+  {
+    list = (char*)malloc(allocated);
+    varnam_word_breakers(handle, list, allocated);
+  }
+  return list;
+}
+
 static gboolean
 is_word_break (guint keyval)
 {
-  if (keyval == 46 || keyval == 44 || keyval == 63 || keyval == 33 || keyval == 40 || keyval == 41 || keyval == 34 || keyval == 59 || keyval == 39)
-    return TRUE;
-  return FALSE;
+
+  int i;
+  char *list = set_word_breaks();
+
+  for(i=0; list[i] != '\0'; i++)
+  {
+    if((int)list[i] == keyval)
+      return true;
+  }
+
+  return false;
 }
 
 static gboolean
@@ -254,6 +278,7 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
 {
   IBusText *text, *tmp;
   IBusVarnamEngine *varnamEngine = (IBusVarnamEngine *) engine;
+  int ncandidates=0;
 
   if (modifiers & IBUS_RELEASE_MASK)
     return FALSE;
@@ -266,7 +291,9 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
     else
       return TRUE;
   }
- 
+
+  ncandidates = ibus_lookup_table_get_number_of_candidates(varnamEngine->table);
+
   switch (keyval) {
     case IBUS_space:
       text = ibus_varnam_engine_get_candidate (varnamEngine);
@@ -328,6 +355,96 @@ ibus_varnam_engine_process_key_event (IBusEngine *engine,
       ibus_engine_update_lookup_table (engine, varnamEngine->table, TRUE);
 
       return TRUE;
+
+    case IBUS_0:
+      return TRUE;
+
+    case IBUS_1:
+      if (varnamEngine->preedit->len == 0)
+        return FALSE;
+      ibus_lookup_table_set_cursor_pos(varnamEngine->table, 0);
+      ibus_engine_update_lookup_table(engine, varnamEngine->table, TRUE);
+      return TRUE;
+
+    case IBUS_2:
+      if (varnamEngine->preedit->len == 0)
+        return FALSE;
+
+      if(ncandidates < 2)
+        return TRUE;
+      ibus_lookup_table_set_cursor_pos(varnamEngine->table, 1);
+      ibus_engine_update_lookup_table(engine, varnamEngine->table, TRUE);
+      return TRUE;       
+
+    case IBUS_3:
+      if (varnamEngine->preedit->len == 0)
+        return FALSE;
+
+      if(ncandidates < 3)
+        return TRUE;
+      ibus_lookup_table_set_cursor_pos(varnamEngine->table, 2);
+      ibus_engine_update_lookup_table(engine, varnamEngine->table, TRUE);
+      return TRUE;    
+
+    case IBUS_4:
+      if (varnamEngine->preedit->len == 0)
+        return FALSE;
+
+      if(ncandidates < 4)
+        return TRUE;
+      ibus_lookup_table_set_cursor_pos(varnamEngine->table, 3);
+      ibus_engine_update_lookup_table(engine, varnamEngine->table, TRUE);
+      return TRUE;    
+
+    case IBUS_5:
+      if (varnamEngine->preedit->len == 0)
+        return FALSE;
+
+      if(ncandidates < 5)
+        return TRUE;
+      ibus_lookup_table_set_cursor_pos(varnamEngine->table, 4);
+      ibus_engine_update_lookup_table(engine, varnamEngine->table, TRUE);
+      return TRUE;    
+
+    case IBUS_6:
+      if (varnamEngine->preedit->len == 0)
+        return FALSE;
+
+      if(ncandidates < 6)
+        return TRUE;
+      ibus_lookup_table_set_cursor_pos(varnamEngine->table, 5);
+      ibus_engine_update_lookup_table(engine, varnamEngine->table, TRUE);
+      return TRUE;    
+
+    case IBUS_7:
+      if (varnamEngine->preedit->len == 0)
+        return FALSE;
+
+      if(ncandidates < 7)
+        return TRUE;
+      ibus_lookup_table_set_cursor_pos(varnamEngine->table, 6);
+      ibus_engine_update_lookup_table(engine, varnamEngine->table, TRUE);
+      return TRUE;    
+
+    case IBUS_8:
+      if (varnamEngine->preedit->len == 0)
+        return FALSE;
+
+      if(ncandidates < 8)
+        return TRUE;
+      ibus_lookup_table_set_cursor_pos(varnamEngine->table, 7);
+      ibus_engine_update_lookup_table(engine, varnamEngine->table, TRUE);
+      return TRUE;
+
+    case IBUS_9:
+      if (varnamEngine->preedit->len == 0)
+        return FALSE;
+
+      if(ncandidates < 9)
+        return TRUE;
+      ibus_lookup_table_set_cursor_pos(varnamEngine->table, 8);
+      ibus_engine_update_lookup_table(engine, varnamEngine->table, TRUE);
+      return TRUE;                    
 
     case IBUS_BackSpace:
       if (varnamEngine->preedit->len == 0)
