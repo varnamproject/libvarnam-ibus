@@ -9,6 +9,7 @@ Installing dependencies on Debian:
 ```shell
 sudo apt-get install libibus-1.0-dev libcurl4-openssl-dev libgtk-3-dev
 ```
+And also, `libvarnam` from [here](https://github.com/varnamproject/libvarnam) before installing iBus.
 
 Installing iBus engine:
 
