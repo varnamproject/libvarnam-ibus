@@ -26,7 +26,7 @@ foreach(componentXmlFile ${component_xml_files})
     list(GET componentXmlFile 2 varnamEngineName)
     list(GET componentXmlFile 3 varnamEngineDescription)
     configure_file(varnam.xml.in varnam.${varnamLangCode}.xml)
-    install(FILES varnam.${varnamLangCode}.xml DESTINATION /usr/share/ibus/component)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/varnam.${varnamLangCode}.xml DESTINATION /usr/share/ibus/component) #In case the user is building in a different directory from the source directory.
 endforeach(componentXmlFile)
 
 set(engine_executable_name ibus-engine-varnam)
