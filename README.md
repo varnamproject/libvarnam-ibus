@@ -14,9 +14,10 @@ Installing iBus engine:
 
 ```shell
 git clone https://github.com/varnamproject/libvarnam-ibus.git && cd libvarnam-ibus
-cmake . && make && sudo make install
+cmake . -DVARNAM_LANGUAGES="ml;ml-inscript;hi" && make && sudo make install
 ibus restart
 ```
+where the variable `VARNAM_LANGUAGES` is a semicolon-separated list of languages varnam was compiled with.
 
 Usage
 -----
