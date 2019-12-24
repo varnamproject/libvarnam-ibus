@@ -10,13 +10,53 @@ list (APPEND varnam_engine_sources
   main.c
 )
 
-# Format of the below list should be
+# Format of the list of component languages should be
 # iBusLangCode,varnamLangCode,engineName,description
-list (APPEND component_xml_files
-  "ml,ml,Varnam,Varnam input method"
-  "ml,ml-inscript,Varnam Inscript,Varnam input method for inscript"
-  "hi,hi,Varnam,Varnam input method"
-)
+
+foreach(varnam_languages ${VARNAM_LANGUAGES})
+    if(varnam_languages STREQUAL "as")
+        list (APPEND component_xml_files "as,as,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "as")
+    if(varnam_languages STREQUAL "bn")
+        list (APPEND component_xml_files "bn,bn,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "bn")
+    if(varnam_languages STREQUAL "gu")
+        list (APPEND component_xml_files "gu,gu,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "gu")
+    if(varnam_languages STREQUAL "hi")
+        list (APPEND component_xml_files "hi,hi,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "hi")
+    if(varnam_languages STREQUAL "kn")
+        list (APPEND component_xml_files "kn,kn,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "kn")
+    if(varnam_languages STREQUAL "ml")
+        list (APPEND component_xml_files "ml,ml,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "ml")
+    if(varnam_languages STREQUAL "ml-inscript")
+        list (APPEND component_xml_files "ml,ml-inscript,Varnam,Varnam input method for inscript")
+    endif(varnam_languages STREQUAL "ml-inscript")
+    if(varnam_languages STREQUAL "mr")
+        list (APPEND component_xml_files "mr,mr,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "mr")
+    if(varnam_languages STREQUAL "ne")
+        list (APPEND component_xml_files "ne,ne,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "ne")
+    if(varnam_languages STREQUAL "or")
+        list (APPEND component_xml_files "or,or,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "or")
+    if(varnam_languages STREQUAL "pa")
+        list (APPEND component_xml_files "pa,pa,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "pa")
+    if(varnam_languages STREQUAL "sa")
+        list (APPEND component_xml_files "sa,sa,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "sa")
+    if(varnam_languages STREQUAL "ta")
+        list (APPEND component_xml_files "ta,ta,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "ta")
+    if(varnam_languages STREQUAL "te")
+        list (APPEND component_xml_files "te,te,Varnam,Varnam input method")
+    endif(varnam_languages STREQUAL "te")
+endforeach(varnam_languages)
 
 foreach(componentXmlFile ${component_xml_files})
     # replaces , with ;. CMake uses ; for list
