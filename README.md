@@ -1,5 +1,9 @@
-iBUS engine for varnam
+iBUS Engine for Varnam
 ======================
+
+Get suggestions from Varnam as you type anywhere in your Linux desktop!
+
+![](https://user-images.githubusercontent.com/2305675/101373573-19f9fa80-38d3-11eb-9784-3e10feaaade7.png)
 
 Installation
 ------------
